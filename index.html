@@ -47,6 +47,40 @@
       <div class="type-toggle">
         <button id="btn-masuk" class="active-income" onclick="setType('masuk')">⬆ Pemasukan</button>
         <button id="btn-keluar" onclick="setType('keluar')">⬇ Pengeluaran</button>
+        <button id="btn-transfer" onclick="setType('transfer')">↔ Transfer</button>
+      </div>
+
+      <div id="form-transfer" style="display:none">
+        <div class="form-grid" id="form-grid-utama">
+        <input type="text" id="keterangan"
+          <div>
+            <label style="font-size:12px;color:#94a3b8">Dari</label>
+            <select id="transfer-dari">
+              <option value="Cash">💵 Cash</option>
+              <option value="BNI">🏦 BNI</option>
+              <option value="BSI">🏦 BSI</option>
+              <option value="DANA">🏦 DANA</option>
+              <option value="OVO">🏦 OVO</option>
+              <option value="SeaBank">🏦 SeaBank</option>
+              <option value="GoPay">🏦 GoPay</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:12px;color:#94a3b8">Ke</label>
+            <select id="transfer-ke">
+              <option value="BNI">🏦 BNI</option>
+              <option value="BSI">🏦 BSI</option>
+              <option value="DANA">🏦 DANA</option>
+              <option value="OVO">🏦 OVO</option>
+              <option value="SeaBank">🏦 SeaBank</option>
+              <option value="GoPay">🏦 GoPay</option>
+              <option value="Cash">💵 Cash</option>
+            </select>
+          </div>
+        </div>
+        <input type="number" id="transfer-jumlah" placeholder="Jumlah transfer (Rp)" min="0" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;background:#f8fafc;margin-bottom:10px;font-family:'Inter',sans-serif" />
+        <input type="date" id="transfer-tanggal" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;background:#f8fafc;margin-bottom:10px;font-family:'Inter',sans-serif" />
+        <button class="btn-simpan" onclick="lakukanTransfer()">↔ Transfer</button>
       </div>
       <div class="form-grid">
         <input type="text" id="keterangan" placeholder="Keterangan (mis. Gaji)" />
@@ -68,7 +102,7 @@
           <option value="GoPay">🏦 GoPay</option>
         </select>
       </div>
-      <button class="btn-simpan" onclick="tambahTransaksi()">+ Simpan Transaksi</button>
+      <button class="btn-simpan" id="btn-simpan-utama" onclick="tambahTransaksi()">+ Simpan Transaksi</button>
     </div>
 
     <div class="form-box form-box-grafik">

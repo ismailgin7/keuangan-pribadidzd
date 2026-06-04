@@ -53,6 +53,8 @@ function setType(tipe) {
       <option value="Gaji">Gaji</option>
       <option value="Usaha">Usaha</option>
       <option value="Investasi">Investasi</option>
+      <option value="Piutang">Piutang</option>
+      <option value="Tabungan">Tabungan</option>
       <option value="Lainnya">Lainnya</option>
     `;
   } else if (tipe === 'keluar') {
@@ -70,6 +72,7 @@ function setType(tipe) {
       <option value="Kesehatan">Kesehatan</option>
       <option value="Hiburan">Hiburan</option>
       <option value="Pendidikan">Pendidikan</option>
+      <option value="Hutang">Hutang</option>
       <option value="Lainnya">Lainnya</option>
     `;
   } else if (tipe === 'transfer') {
@@ -284,9 +287,17 @@ function renderBudget() {
     .reduce((sum, t) => sum + t.jumlah, 0);
   const totalSisaAnggaran = totalAnggaran - totalTerpakai;
   const elAnggaran = document.getElementById('total-anggaran');
-  if (elAnggaran) {
-    elAnggaran.textContent = formatRupiah(Math.abs(totalSisaAnggaran));
-    elAnggaran.style.color = totalSisaAnggaran < 0 ? '#dc2626' : '#1e293b';
+  if (elAnggaran) elAnggaran.textContent = formatRupiah(totalAnggaran);
+
+  const bulanIni = new Date().toISOString().slice(0, 7);
+  const totalTerpakai = transaksi
+    .filter(t => t.tipe === 'keluar' && t.kategori !== 'Transfer' && t.tanggal.slice(0, 7) === bulanIni)
+    .reduce((sum, t) => sum + t.jumlah, 0);
+  const totalSisa = totalAnggaran - totalTerpakai;
+  const elSisa = document.getElementById('sisa-anggaran');
+  if (elSisa) {
+    elSisa.textContent = formatRupiah(Math.abs(totalSisa));
+    elSisa.style.color = totalSisa < 0 ? '#dc2626' : '#1e293b';
   }
 
   if (keys.length === 0) {
@@ -379,7 +390,113 @@ function lakukanTransfer() {
   document.getElementById('transfer-jumlah').value = '';
   alert(`Transfer ${formatRupiah(jumlah)} dari ${dari} ke ${ke} berhasil!`);
 }
+// ======= HUTANG PIUTANG =======
+const hpRef = ref(db, 'hutangpiutang');
+let hpData = [];
+let hpTab = 'piutang';
+let grafikHPInstance = null;
 
+onValue(hpRef, (snapshot) => {
+  hpData = [];
+  snapshot.forEach((child) => {
+    hpData.unshift({ _key: child.key, ...child.val() });
+  });
+  renderHP();
+});
+
+function setHPTab(tab, el) {
+  hpTab = tab;
+  document.querySelectorAll('.hp-tab').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderHP();
+}
+
+function tambahHP() {
+  const nama = document.getElementById('hp-nama').value.trim();
+  const jumlah = parseFloat(document.getElementById('hp-jumlah').value);
+  const tanggal = document.getElementById('hp-tanggal').value;
+  const keterangan = document.getElementById('hp-keterangan').value.trim();
+
+  if (!nama || !jumlah || jumlah <= 0 || !tanggal) {
+    alert('Lengkapi nama, jumlah, dan tanggal!');
+    return;
+  }
+
+  push(hpRef, { nama, jumlah, tanggal, keterangan, tipe: hpTab, lunas: false });
+
+  document.getElementById('hp-nama').value = '';
+  document.getElementById('hp-jumlah').value = '';
+  document.getElementById('hp-keterangan').value = '';
+}
+
+function tandaiLunas(key) {
+  if (!confirm('Tandai sebagai lunas dan hapus?')) return;
+  remove(ref(db, 'hutangpiutang/' + key));
+}
+
+function renderHP() {
+  const container = document.getElementById('hp-list');
+  const filtered = hpData.filter(h => h.tipe === hpTab);
+
+  if (filtered.length === 0) {
+    container.innerHTML = `<p style="font-size:13px;color:#aaa;text-align:center;padding:12px">Tidak ada ${hpTab === 'piutang' ? 'piutang' : 'hutang'}.</p>`;
+    renderGrafikHP();
+    return;
+  }
+
+  const total = filtered.reduce((s, h) => s + h.jumlah, 0);
+
+  container.innerHTML = `
+    <div style="font-size:13px;color:#94a3b8;margin-bottom:10px">
+      Total ${hpTab === 'piutang' ? 'piutang' : 'hutang'}: 
+      <strong style="color:${hpTab === 'piutang' ? '#16a34a' : '#dc2626'}">${formatRupiah(total)}</strong>
+    </div>
+  ` + filtered.map(h => {
+    const tgl = new Date(h.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+    return `
+      <div class="hp-item">
+        <div class="hp-info">
+          <div class="hp-nama-text">${h.nama}</div>
+          <div class="hp-meta">${h.keterangan || '-'} · ${tgl}</div>
+        </div>
+        <div class="hp-jumlah ${h.tipe}">${formatRupiah(h.jumlah)}</div>
+        <button class="hp-lunas" onclick="tandaiLunas('${h._key}')">✓ Lunas</button>
+      </div>
+    `;
+  }).join('');
+
+  renderGrafikHP();
+}
+
+function renderGrafikHP() {
+  const piutangTotal = hpData.filter(h => h.tipe === 'piutang').reduce((s,h) => s+h.jumlah, 0);
+  const hutangTotal = hpData.filter(h => h.tipe === 'hutang').reduce((s,h) => s+h.jumlah, 0);
+
+  if (grafikHPInstance) grafikHPInstance.destroy();
+  if (piutangTotal === 0 && hutangTotal === 0) return;
+
+  const ctx = document.getElementById('grafikHP').getContext('2d');
+  grafikHPInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Piutang', 'Hutang'],
+      datasets: [{
+        data: [piutangTotal, hutangTotal],
+        backgroundColor: ['#10b981', '#ef4444'],
+        borderRadius: 8,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ` Rp ${ctx.raw.toLocaleString('id-ID')}` } }
+      },
+      scales: { y: { ticks: { callback: v => 'Rp ' + v.toLocaleString('id-ID') } } }
+    }
+  });
+}
 window.setType = setType;
 window.tambahTransaksi = tambahTransaksi;
 window.hapus = hapus;
@@ -388,3 +505,6 @@ window.hapusBudget = hapusBudget;
 window.exportExcel = exportExcel;
 window.render = render;
 window.lakukanTransfer = lakukanTransfer; 
+window.setHPTab = setHPTab;
+window.tambahHP = tambahHP;
+window.tandaiLunas = tandaiLunas;

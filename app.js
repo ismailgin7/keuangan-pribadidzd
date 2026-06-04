@@ -143,7 +143,7 @@ function render() {
   elSaldo.textContent = formatRupiah(Math.abs(saldo));
   elSaldo.style.color = saldo < 0 ? '#dc2626' : '#111';
 
-  const masukBank = filtered.filter(t => t.tipe === 'masuk' && t.metode !== 'Cash').reduce((s,t) => s+t.jumlah, 0);
+  const masukBank = filtered.filter(t => t.tipe === 'masuk' && t.metode !== 'Cash' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
   const keluarBank = filtered.filter(t => t.tipe === 'keluar' && t.metode !== 'Cash' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
   const saldoBank = masukBank - keluarBank;
   const elBank = document.getElementById('saldo-bank');

@@ -289,7 +289,7 @@ function renderBudget() {
   const elAnggaran = document.getElementById('total-anggaran');
   if (elAnggaran) elAnggaran.textContent = formatRupiah(totalAnggaran);
 
-  const bulanIni = new Date().toISOString().slice(0, 7);
+  bulanIni = new Date().toISOString().slice(0, 7);
   const totalTerpakai = transaksi
     .filter(t => t.tipe === 'keluar' && t.kategori !== 'Transfer' && t.tanggal.slice(0, 7) === bulanIni)
     .reduce((sum, t) => sum + t.jumlah, 0);
@@ -307,8 +307,9 @@ function renderBudget() {
 
   container.innerHTML = keys.map(kat => {
     const batas = budget[kat];
-    const bulanIni = new Date().toISOString().slice(0, 7);
+    const bulanIni2 = new Date().toISOString().slice(0, 7);
     const terpakai = transaksi
+      .filter(t => t.tipe === 'keluar' && t.kategori === kat && t.tanggal.slice(0, 7) === bulanIni2)
       .filter(t => t.tipe === 'keluar' && t.kategori === kat && t.tanggal.slice(0, 7) === bulanIni)
       .reduce((sum, t) => sum + t.jumlah, 0);
 

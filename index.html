@@ -169,10 +169,22 @@
 
       <div class="budget-form" style="margin-top:12px">
         <input type="text" id="hp-nama" placeholder="Nama orang" />
-        <input type="number" id="hp-jumlah" placeholder="Jumlah (Rp)" min="0" />
+        <input type="number" id="hp-jumlah" placeholder="Jumlah total (Rp)" min="0" />
         <input type="date" id="hp-tanggal" />
         <input type="text" id="hp-keterangan" placeholder="Keterangan (opsional)" />
         <button class="btn-simpan" onclick="tambahHP()">+ Tambah</button>
+      </div>
+
+      <!-- Form Cicilan -->
+      <div id="form-cicilan" style="display:none;margin-top:12px;padding:12px;background:#f8fafc;border-radius:10px;border:1.5px solid #e2e8f0">
+        <p id="cicilan-label" style="font-size:13px;font-weight:600;margin-bottom:10px;color:#1e293b"></p>
+        <div class="budget-form">
+          <input type="number" id="cicilan-jumlah" placeholder="Jumlah bayar (Rp)" min="0" />
+          <input type="date" id="cicilan-tanggal" />
+          <input type="text" id="cicilan-keterangan" placeholder="Keterangan (opsional)" />
+          <button class="btn-simpan" onclick="simpanCicilan()">✓ Simpan Bayar</button>
+          <button onclick="tutupCicilan()" style="padding:10px;border:1.5px solid #e2e8f0;border-radius:10px;background:white;cursor:pointer;font-family:'Inter',sans-serif;font-size:14px">Batal</button>
+        </div>
       </div>
 
       <div style="margin-top:20px">

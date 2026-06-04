@@ -45,6 +45,13 @@ function setType(tipe) {
   tipeAktif = tipe;
   document.getElementById('btn-masuk').className = '';
   document.getElementById('btn-keluar').className = '';
+  document.getElementById('btn-transfer').className = '';
+
+  // Sembunyikan form transfer dulu
+  document.getElementById('form-transfer').style.display = 'none';
+  document.getElementById('form-grid-utama').style.display = 'grid';
+  document.getElementById('btn-simpan-utama').style.display = 'block';
+
   if (tipe === 'masuk') {
     document.getElementById('btn-masuk').className = 'active-income';
     document.getElementById('kategori').innerHTML = `
@@ -53,7 +60,7 @@ function setType(tipe) {
       <option value="Investasi">Investasi</option>
       <option value="Lainnya">Lainnya</option>
     `;
-  } else {
+  } else if (tipe === 'keluar') {
     document.getElementById('btn-keluar').className = 'active-expense';
     document.getElementById('kategori').innerHTML = `
       <option value="LAG">LAG</option>
@@ -70,9 +77,14 @@ function setType(tipe) {
       <option value="Pendidikan">Pendidikan</option>
       <option value="Lainnya">Lainnya</option>
     `;
+  } else if (tipe === 'transfer') {
+    document.getElementById('btn-transfer').className = 'active-transfer';
+    document.getElementById('form-grid-utama').style.display = 'none';
+    document.getElementById('btn-simpan-utama').style.display = 'none';
+    document.getElementById('form-transfer').style.display = 'block';
+    document.getElementById('transfer-tanggal').valueAsDate = new Date();
   }
 }
-
 function formatRupiah(angka) {
   return 'Rp ' + Math.round(angka).toLocaleString('id-ID');
 }
@@ -404,3 +416,41 @@ window.render = render;
     font-size: 15px;
   }
 }
+// ======= TRANSFER =======
+function lakukanTransfer() {
+  const dari = document.getElementById('transfer-dari').value;
+  const ke = document.getElementById('transfer-ke').value;
+  const jumlah = parseFloat(document.getElementById('transfer-jumlah').value);
+  const tanggal = document.getElementById('transfer-tanggal').value;
+
+  if (dari === ke) { alert('Akun asal dan tujuan tidak boleh sama!'); return; }
+  if (!jumlah || jumlah <= 0) { alert('Isi jumlah transfer!'); return; }
+  if (!tanggal) { alert('Isi tanggal transfer!'); return; }
+
+  // Catat sebagai pengeluaran dari akun asal
+  push(transaksiRef, {
+    id: Date.now(),
+    tipe: 'keluar',
+    keterangan: `Transfer ke ${ke}`,
+    jumlah,
+    kategori: 'Transfer',
+    tanggal,
+    metode: dari
+  });
+
+  // Catat sebagai pemasukan ke akun tujuan
+  push(transaksiRef, {
+    id: Date.now() + 1,
+    tipe: 'masuk',
+    keterangan: `Transfer dari ${dari}`,
+    jumlah,
+    kategori: 'Transfer',
+    tanggal,
+    metode: ke
+  });
+
+  document.getElementById('transfer-jumlah').value = '';
+  alert(`Transfer ${formatRupiah(jumlah)} dari ${dari} ke ${ke} berhasil!`);
+}
+
+window.lakukanTransfer = lakukanTransfer;

@@ -277,6 +277,9 @@ function hapusBudget(kat) {
 function renderBudget() {
   const container = document.getElementById('budget-list');
   const keys = Object.keys(budget);
+  const totalAnggaran = Object.values(budget).reduce((sum, val) => sum + val, 0);
+  const elAnggaran = document.getElementById('total-anggaran');
+  if (elAnggaran) elAnggaran.textContent = formatRupiah(totalAnggaran);
 
   if (keys.length === 0) {
     container.innerHTML = '<p style="font-size:13px;color:#aaa;margin-bottom:8px">Belum ada anggaran yang diset.</p>';

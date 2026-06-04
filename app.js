@@ -25,6 +25,7 @@ let grafikSaldoInstance = null;
 let grafikHPInstance = null;
 let budget = {};
 let hpData = [];
+let cicilanTargetKey = null;
 let hpTab = 'piutang';
 
 document.getElementById('tanggal').valueAsDate = new Date();
@@ -396,9 +397,8 @@ function renderHP() {
   const grafikContainer = document.getElementById('hp-grafik-list');
   const filtered = hpData.filter(h => h.tipe === hpTab);
 
-  // Update kartu dashboard
-  const totalPiutang = hpData.filter(h => h.tipe === 'piutang').reduce((s,h) => s+h.jumlah, 0);
-  const totalHutang = hpData.filter(h => h.tipe === 'hutang').reduce((s,h) => s+h.jumlah, 0);
+  const totalPiutang = hpData.filter(h => h.tipe === 'piutang').reduce((s,h) => s + (h.jumlah - (h.terbayar || 0)), 0);
+  const totalHutang = hpData.filter(h => h.tipe === 'hutang').reduce((s,h) => s + (h.jumlah - (h.terbayar || 0)), 0);
   const elPiutang = document.getElementById('total-piutang');
   const elHutang = document.getElementById('total-hutang');
   if (elPiutang) elPiutang.textContent = formatRupiah(totalPiutang);
@@ -410,47 +410,89 @@ function renderHP() {
     return;
   }
 
-  const total = filtered.reduce((s, h) => s + h.jumlah, 0);
+  const totalSisa = filtered.reduce((s, h) => s + (h.jumlah - (h.terbayar || 0)), 0);
   container.innerHTML = `
     <div style="font-size:13px;color:#94a3b8;margin-bottom:10px">
-      Total ${hpTab === 'piutang' ? 'piutang' : 'hutang'}: 
-      <strong style="color:${hpTab === 'piutang' ? '#16a34a' : '#dc2626'}">${formatRupiah(total)}</strong>
+      Sisa ${hpTab === 'piutang' ? 'piutang' : 'hutang'}: 
+      <strong style="color:${hpTab === 'piutang' ? '#16a34a' : '#dc2626'}">${formatRupiah(totalSisa)}</strong>
     </div>
   ` + filtered.map(h => {
     const tgl = new Date(h.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+    const terbayar = h.terbayar || 0;
+    const sisa = h.jumlah - terbayar;
+    const persen = Math.min((terbayar / h.jumlah) * 100, 100).toFixed(0);
+    const warna = hpTab === 'piutang' ? '#10b981' : '#ef4444';
+    const sudahLunas = sisa <= 0;
     return `
-      <div class="hp-item">
-        <div class="hp-info">
-          <div class="hp-nama-text">${h.nama}</div>
-          <div class="hp-meta">${h.keterangan || '-'} · ${tgl}</div>
+      <div class="budget-item">
+        <div class="budget-header">
+          <span style="font-weight:500">${h.nama} ${sudahLunas ? '✅' : ''}</span>
+          <span class="budget-angka">${formatRupiah(terbayar)} / ${formatRupiah(h.jumlah)}</span>
         </div>
-        <div class="hp-jumlah ${h.tipe}">${formatRupiah(h.jumlah)}</div>
-        <button class="hp-lunas" onclick="tandaiLunas('${h._key}')">✓ Lunas</button>
+        <div style="font-size:11px;color:#94a3b8;margin-bottom:4px">${h.keterangan || ''} · ${tgl}</div>
+        <div class="budget-bar-track">
+          <div class="budget-bar-fill" style="width:${persen}%;background:${warna}"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
+          <div class="budget-status">Sisa ${formatRupiah(sisa)} (${persen}% terbayar)</div>
+          <div style="display:flex;gap:6px">
+            ${!sudahLunas ? `<button class="hp-lunas" onclick="bukaCicilan('${h._key}', '${h.nama}', ${sisa})">+ Bayar</button>` : ''}
+            <button class="hp-lunas" onclick="tandaiLunas('${h._key}')" style="color:#dc2626;border-color:#dc2626">🗑 Hapus</button>
+          </div>
+        </div>
       </div>
     `;
   }).join('');
 
-  // Grafik per orang seperti anggaran
   if (grafikContainer) {
     grafikContainer.innerHTML = filtered.map(h => {
-      const persen = total > 0 ? Math.min((h.jumlah / total) * 100, 100).toFixed(0) : 0;
+      const terbayar = h.terbayar || 0;
+      const sisa = h.jumlah - terbayar;
+      const persen = Math.min((terbayar / h.jumlah) * 100, 100).toFixed(0);
       const warna = hpTab === 'piutang' ? '#10b981' : '#ef4444';
       return `
         <div class="budget-item">
           <div class="budget-header">
             <span style="font-weight:500">${h.nama}</span>
-            <span class="budget-angka">${formatRupiah(h.jumlah)}</span>
+            <span class="budget-angka">Sisa ${formatRupiah(sisa)}</span>
           </div>
           <div class="budget-bar-track">
             <div class="budget-bar-fill" style="width:${persen}%;background:${warna}"></div>
           </div>
-          <div class="budget-status">${persen}% dari total ${hpTab}</div>
+          <div class="budget-status">${persen}% terbayar dari ${formatRupiah(h.jumlah)}</div>
         </div>
       `;
     }).join('');
   }
 }
+function bukaCicilan(key, nama, sisa) {
+  cicilanTargetKey = key;
+  document.getElementById('cicilan-label').textContent = `Bayar ${hpTab === 'piutang' ? 'piutang' : 'hutang'} — ${nama} (Sisa: ${formatRupiah(sisa)})`;
+  document.getElementById('cicilan-jumlah').value = '';
+  document.getElementById('cicilan-keterangan').value = '';
+  document.getElementById('cicilan-tanggal').valueAsDate = new Date();
+  document.getElementById('form-cicilan').style.display = 'block';
+  document.getElementById('form-cicilan').scrollIntoView({ behavior: 'smooth' });
+}
 
+function tutupCicilan() {
+  cicilanTargetKey = null;
+  document.getElementById('form-cicilan').style.display = 'none';
+}
+
+function simpanCicilan() {
+  if (!cicilanTargetKey) return;
+  const jumlah = parseFloat(document.getElementById('cicilan-jumlah').value);
+  if (!jumlah || jumlah <= 0) { alert('Isi jumlah bayar!'); return; }
+
+  const target = hpData.find(h => h._key === cicilanTargetKey);
+  if (!target) return;
+
+  const terbayarBaru = (target.terbayar || 0) + jumlah;
+  set(ref(db, 'hutangpiutang/' + cicilanTargetKey + '/terbayar'), terbayarBaru);
+
+  tutupCicilan();
+}
 
 window.setType = setType;
 window.tambahTransaksi = tambahTransaksi;
@@ -463,3 +505,6 @@ window.lakukanTransfer = lakukanTransfer;
 window.setHPTab = setHPTab;
 window.tambahHP = tambahHP;
 window.tandaiLunas = tandaiLunas;
+window.bukaCicilan = bukaCicilan;
+window.tutupCicilan = tutupCicilan;
+window.simpanCicilan = simpanCicilan;

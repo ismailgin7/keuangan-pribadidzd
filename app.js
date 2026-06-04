@@ -278,8 +278,16 @@ function renderBudget() {
   const container = document.getElementById('budget-list');
   const keys = Object.keys(budget);
   const totalAnggaran = Object.values(budget).reduce((sum, val) => sum + val, 0);
+  const bulanIni = new Date().toISOString().slice(0, 7);
+  const totalTerpakai = transaksi
+    .filter(t => t.tipe === 'keluar' && t.kategori !== 'Transfer' && t.tanggal.slice(0, 7) === bulanIni)
+    .reduce((sum, t) => sum + t.jumlah, 0);
+  const totalSisaAnggaran = totalAnggaran - totalTerpakai;
   const elAnggaran = document.getElementById('total-anggaran');
-  if (elAnggaran) elAnggaran.textContent = formatRupiah(totalAnggaran);
+  if (elAnggaran) {
+    elAnggaran.textContent = formatRupiah(Math.abs(totalSisaAnggaran));
+    elAnggaran.style.color = totalSisaAnggaran < 0 ? '#dc2626' : '#1e293b';
+  }
 
   if (keys.length === 0) {
     container.innerHTML = '<p style="font-size:13px;color:#aaa;margin-bottom:8px">Belum ada anggaran yang diset.</p>';

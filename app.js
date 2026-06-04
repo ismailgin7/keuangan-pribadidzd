@@ -132,8 +132,8 @@ function render() {
     ? transaksi.filter(t => t.tanggal.slice(0, 7) === dipilih)
     : transaksi;
 
-  const totalMasuk = filtered.filter(t => t.tipe === 'masuk').reduce((sum, t) => sum + t.jumlah, 0);
-  const totalKeluar = filtered.filter(t => t.tipe === 'keluar').reduce((sum, t) => sum + t.jumlah, 0);
+  const totalMasuk = filtered.filter(t => t.tipe === 'masuk' && t.kategori !== 'Transfer').reduce((sum, t) => sum + t.jumlah, 0);
+  const totalKeluar = filtered.filter(t => t.tipe === 'keluar' && t.kategori !== 'Transfer').reduce((sum, t) => sum + t.jumlah, 0);
   const saldo = totalMasuk - totalKeluar;
 
   document.getElementById('total-masuk').textContent = formatRupiah(totalMasuk);
@@ -144,14 +144,14 @@ function render() {
   elSaldo.style.color = saldo < 0 ? '#dc2626' : '#111';
 
   const masukBank = filtered.filter(t => t.tipe === 'masuk' && t.metode !== 'Cash').reduce((s,t) => s+t.jumlah, 0);
-  const keluarBank = filtered.filter(t => t.tipe === 'keluar' && t.metode !== 'Cash').reduce((s,t) => s+t.jumlah, 0);
+  const keluarBank = filtered.filter(t => t.tipe === 'keluar' && t.metode !== 'Cash' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
   const saldoBank = masukBank - keluarBank;
   const elBank = document.getElementById('saldo-bank');
   elBank.textContent = formatRupiah(Math.abs(saldoBank));
   elBank.style.color = saldoBank < 0 ? '#dc2626' : '#1e293b';
 
   const masukCash = filtered.filter(t => t.tipe === 'masuk' && t.metode === 'Cash').reduce((s,t) => s+t.jumlah, 0);
-  const keluarCash = filtered.filter(t => t.tipe === 'keluar' && t.metode === 'Cash').reduce((s,t) => s+t.jumlah, 0);
+  const keluarCash = filtered.filter(t => t.tipe === 'keluar' && t.metode === 'Cash' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
   const saldoCash = masukCash - keluarCash;
   const elCash = document.getElementById('saldo-cash');
   elCash.textContent = formatRupiah(Math.abs(saldoCash));
@@ -376,4 +376,4 @@ window.simpanBudget = simpanBudget;
 window.hapusBudget = hapusBudget;
 window.exportExcel = exportExcel;
 window.render = render;
-window.lakukanTransfer = lakukanTransfer;
+window.lakukanTransfer = lakukanTransfer; 

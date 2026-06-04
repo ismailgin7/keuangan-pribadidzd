@@ -16,12 +16,16 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const transaksiRef = ref(db, 'transaksi');
 const budgetRef = ref(db, 'budget');
+const hpRef = ref(db, 'hutangpiutang');
 
 let transaksi = [];
 let tipeAktif = 'masuk';
 let grafikInstance = null;
 let grafikSaldoInstance = null;
+let grafikHPInstance = null;
 let budget = {};
+let hpData = [];
+let hpTab = 'piutang';
 
 document.getElementById('tanggal').valueAsDate = new Date();
 
@@ -31,11 +35,20 @@ onValue(transaksiRef, (snapshot) => {
     transaksi.unshift({ _key: child.key, ...child.val() });
   });
   render();
+  renderBudget();
 });
 
 onValue(budgetRef, (snapshot) => {
   budget = snapshot.val() || {};
   renderBudget();
+});
+
+onValue(hpRef, (snapshot) => {
+  hpData = [];
+  snapshot.forEach((child) => {
+    hpData.unshift({ _key: child.key, ...child.val() });
+  });
+  renderHP();
 });
 
 function setType(tipe) {
@@ -44,8 +57,7 @@ function setType(tipe) {
   document.getElementById('btn-keluar').className = '';
   document.getElementById('btn-transfer').className = '';
   document.getElementById('form-transfer').style.display = 'none';
-  document.getElementById('form-grid-utama').style.display = 'grid';
-  document.getElementById('btn-simpan-utama').style.display = 'block';
+  document.getElementById('form-utama').style.display = 'block';
 
   if (tipe === 'masuk') {
     document.getElementById('btn-masuk').className = 'active-income';
@@ -77,8 +89,7 @@ function setType(tipe) {
     `;
   } else if (tipe === 'transfer') {
     document.getElementById('btn-transfer').className = 'active-transfer';
-    document.getElementById('form-grid-utama').style.display = 'none';
-    document.getElementById('btn-simpan-utama').style.display = 'none';
+    document.getElementById('form-utama').style.display = 'none';
     document.getElementById('form-transfer').style.display = 'block';
     document.getElementById('transfer-tanggal').valueAsDate = new Date();
   }
@@ -100,16 +111,7 @@ function tambahTransaksi() {
     return;
   }
 
-  push(transaksiRef, {
-    id: Date.now(),
-    tipe: tipeAktif,
-    keterangan,
-    jumlah,
-    kategori,
-    tanggal,
-    metode
-  });
-
+  push(transaksiRef, { id: Date.now(), tipe: tipeAktif, keterangan, jumlah, kategori, tanggal, metode });
   document.getElementById('keterangan').value = '';
   document.getElementById('jumlah').value = '';
 }
@@ -161,7 +163,6 @@ function render() {
   elCash.style.color = saldoCash < 0 ? '#dc2626' : '#1e293b';
 
   const list = document.getElementById('list-transaksi');
-
   if (filtered.length === 0) {
     list.innerHTML = '<li class="kosong">Tidak ada transaksi.</li>';
     renderGrafik(filtered);
@@ -170,19 +171,15 @@ function render() {
   }
 
   list.innerHTML = filtered.map(t => {
-    const tgl = new Date(t.tanggal).toLocaleDateString('id-ID', {
-      day: 'numeric', month: 'short', year: 'numeric'
-    });
-    const sign = t.tipe === 'masuk' ? '+' : t.tipe === 'transfer' ? '↔' : '-';
+    const tgl = new Date(t.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+    const sign = t.tipe === 'masuk' ? '+' : '-';
     return `
       <li>
         <div class="tx-info">
           <div class="tx-nama">${t.keterangan}</div>
           <div class="tx-meta">${t.kategori} · ${t.metode} · ${tgl}</div>
         </div>
-        <div class="tx-nominal ${t.tipe}">
-          ${sign}${formatRupiah(t.jumlah)}
-        </div>
+        <div class="tx-nominal ${t.tipe}">${sign}${formatRupiah(t.jumlah)}</div>
         <button class="tx-hapus" onclick="hapus('${t._key}')">🗑</button>
       </li>
     `;
@@ -195,7 +192,7 @@ function render() {
 function renderGrafik(data) {
   const sumber = data || transaksi;
   const dataKategori = {};
-  sumber.forEach(t => {
+  sumber.filter(t => t.kategori !== 'Transfer').forEach(t => {
     if (!dataKategori[t.kategori]) dataKategori[t.kategori] = { masuk: 0, keluar: 0 };
     dataKategori[t.kategori][t.tipe] += t.jumlah;
   });
@@ -231,14 +228,12 @@ function renderGrafik(data) {
 function renderGrafikSaldo(data) {
   const sumber = data || transaksi;
   const metodeList = ['Cash', 'BNI', 'BSI', 'DANA', 'OVO', 'SeaBank', 'GoPay'];
-  const aktif = metodeList.filter(m =>
-    sumber.some(t => t.metode === m)
-  );
+  const aktif = metodeList.filter(m => sumber.some(t => t.metode === m));
   const masukAktif = aktif.map(m =>
-    sumber.filter(t => t.tipe === 'masuk' && t.metode === m).reduce((s,t) => s+t.jumlah, 0)
+    sumber.filter(t => t.tipe === 'masuk' && t.metode === m && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0)
   );
   const keluarAktif = aktif.map(m =>
-    sumber.filter(t => t.tipe === 'keluar' && t.metode === m).reduce((s,t) => s+t.jumlah, 0)
+    sumber.filter(t => t.tipe === 'keluar' && t.metode === m && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0)
   );
 
   if (grafikSaldoInstance) grafikSaldoInstance.destroy();
@@ -285,15 +280,11 @@ function renderBudget() {
   const totalTerpakai = transaksi
     .filter(t => t.tipe === 'keluar' && t.kategori !== 'Transfer' && t.tanggal.slice(0, 7) === bulanIni)
     .reduce((sum, t) => sum + t.jumlah, 0);
-  const totalSisaAnggaran = totalAnggaran - totalTerpakai;
+  const totalSisa = totalAnggaran - totalTerpakai;
+
   const elAnggaran = document.getElementById('total-anggaran');
   if (elAnggaran) elAnggaran.textContent = formatRupiah(totalAnggaran);
 
-  bulanIni = new Date().toISOString().slice(0, 7);
-  const totalTerpakai = transaksi
-    .filter(t => t.tipe === 'keluar' && t.kategori !== 'Transfer' && t.tanggal.slice(0, 7) === bulanIni)
-    .reduce((sum, t) => sum + t.jumlah, 0);
-  const totalSisa = totalAnggaran - totalTerpakai;
   const elSisa = document.getElementById('sisa-anggaran');
   if (elSisa) {
     elSisa.textContent = formatRupiah(Math.abs(totalSisa));
@@ -307,15 +298,11 @@ function renderBudget() {
 
   container.innerHTML = keys.map(kat => {
     const batas = budget[kat];
-    const bulanIni2 = new Date().toISOString().slice(0, 7);
     const terpakai = transaksi
-      .filter(t => t.tipe === 'keluar' && t.kategori === kat && t.tanggal.slice(0, 7) === bulanIni2)
       .filter(t => t.tipe === 'keluar' && t.kategori === kat && t.tanggal.slice(0, 7) === bulanIni)
       .reduce((sum, t) => sum + t.jumlah, 0);
-
     const persen = Math.min((terpakai / batas) * 100, 100).toFixed(0);
     let status = '', kelas = '';
-
     if (terpakai > batas) {
       kelas = 'lewat';
       status = `⚠️ Melebihi anggaran sebesar ${formatRupiah(terpakai - batas)}!`;
@@ -325,7 +312,6 @@ function renderBudget() {
     } else {
       status = `Sisa ${formatRupiah(batas - terpakai)}`;
     }
-
     return `
       <div class="budget-item">
         <div class="budget-header">
@@ -368,43 +354,14 @@ function lakukanTransfer() {
   if (!jumlah || jumlah <= 0) { alert('Isi jumlah transfer!'); return; }
   if (!tanggal) { alert('Isi tanggal transfer!'); return; }
 
-  push(transaksiRef, {
-    id: Date.now(),
-    tipe: 'keluar',
-    keterangan: `Transfer ke ${ke}`,
-    jumlah,
-    kategori: 'Transfer',
-    tanggal,
-    metode: dari
-  });
-
-  push(transaksiRef, {
-    id: Date.now() + 1,
-    tipe: 'masuk',
-    keterangan: `Transfer dari ${dari}`,
-    jumlah,
-    kategori: 'Transfer',
-    tanggal,
-    metode: ke
-  });
+  push(transaksiRef, { id: Date.now(), tipe: 'keluar', keterangan: `Transfer ke ${ke}`, jumlah, kategori: 'Transfer', tanggal, metode: dari });
+  push(transaksiRef, { id: Date.now() + 1, tipe: 'masuk', keterangan: `Transfer dari ${dari}`, jumlah, kategori: 'Transfer', tanggal, metode: ke });
 
   document.getElementById('transfer-jumlah').value = '';
   alert(`Transfer ${formatRupiah(jumlah)} dari ${dari} ke ${ke} berhasil!`);
 }
+
 // ======= HUTANG PIUTANG =======
-const hpRef = ref(db, 'hutangpiutang');
-let hpData = [];
-let hpTab = 'piutang';
-let grafikHPInstance = null;
-
-onValue(hpRef, (snapshot) => {
-  hpData = [];
-  snapshot.forEach((child) => {
-    hpData.unshift({ _key: child.key, ...child.val() });
-  });
-  renderHP();
-});
-
 function setHPTab(tab, el) {
   hpTab = tab;
   document.querySelectorAll('.hp-tab').forEach(b => b.classList.remove('active'));
@@ -424,7 +381,6 @@ function tambahHP() {
   }
 
   push(hpRef, { nama, jumlah, tanggal, keterangan, tipe: hpTab, lunas: false });
-
   document.getElementById('hp-nama').value = '';
   document.getElementById('hp-jumlah').value = '';
   document.getElementById('hp-keterangan').value = '';
@@ -446,7 +402,6 @@ function renderHP() {
   }
 
   const total = filtered.reduce((s, h) => s + h.jumlah, 0);
-
   container.innerHTML = `
     <div style="font-size:13px;color:#94a3b8;margin-bottom:10px">
       Total ${hpTab === 'piutang' ? 'piutang' : 'hutang'}: 
@@ -498,6 +453,7 @@ function renderGrafikHP() {
     }
   });
 }
+
 window.setType = setType;
 window.tambahTransaksi = tambahTransaksi;
 window.hapus = hapus;
@@ -505,7 +461,7 @@ window.simpanBudget = simpanBudget;
 window.hapusBudget = hapusBudget;
 window.exportExcel = exportExcel;
 window.render = render;
-window.lakukanTransfer = lakukanTransfer; 
+window.lakukanTransfer = lakukanTransfer;
 window.setHPTab = setHPTab;
 window.tambahHP = tambahHP;
 window.tandaiLunas = tandaiLunas;

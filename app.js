@@ -1,6 +1,6 @@
 // ======= FIREBASE SETUP =======
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, push, onValue, remove, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAHWlHoXP-HiQIoDZYVi66qQTuj2Rg3zI4",
@@ -25,7 +25,6 @@ let budget = {};
 
 document.getElementById('tanggal').valueAsDate = new Date();
 
-// Dengarkan perubahan transaksi dari Firebase secara realtime
 onValue(transaksiRef, (snapshot) => {
   transaksi = [];
   snapshot.forEach((child) => {
@@ -34,20 +33,16 @@ onValue(transaksiRef, (snapshot) => {
   render();
 });
 
-// Dengarkan perubahan budget dari Firebase secara realtime
 onValue(budgetRef, (snapshot) => {
   budget = snapshot.val() || {};
   renderBudget();
 });
 
-// ======= FUNGSI UTAMA =======
 function setType(tipe) {
   tipeAktif = tipe;
   document.getElementById('btn-masuk').className = '';
   document.getElementById('btn-keluar').className = '';
   document.getElementById('btn-transfer').className = '';
-
-  // Sembunyikan form transfer dulu
   document.getElementById('form-transfer').style.display = 'none';
   document.getElementById('form-grid-utama').style.display = 'grid';
   document.getElementById('btn-simpan-utama').style.display = 'block';
@@ -85,6 +80,7 @@ function setType(tipe) {
     document.getElementById('transfer-tanggal').valueAsDate = new Date();
   }
 }
+
 function formatRupiah(angka) {
   return 'Rp ' + Math.round(angka).toLocaleString('id-ID');
 }
@@ -101,7 +97,6 @@ function tambahTransaksi() {
     return;
   }
 
-  // Simpan ke Firebase
   push(transaksiRef, {
     id: Date.now(),
     tipe: tipeAktif,
@@ -175,7 +170,7 @@ function render() {
     const tgl = new Date(t.tanggal).toLocaleDateString('id-ID', {
       day: 'numeric', month: 'short', year: 'numeric'
     });
-    const sign = t.tipe === 'masuk' ? '+' : '-';
+    const sign = t.tipe === 'masuk' ? '+' : t.tipe === 'transfer' ? '↔' : '-';
     return `
       <li>
         <div class="tx-info">
@@ -232,18 +227,10 @@ function renderGrafik(data) {
 
 function renderGrafikSaldo(data) {
   const sumber = data || transaksi;
-
   const metodeList = ['Cash', 'BNI', 'BSI', 'DANA', 'OVO', 'SeaBank', 'GoPay'];
-
-  const nilaiMasuk = metodeList.map(m =>
-    sumber.filter(t => t.tipe === 'masuk' && t.metode === m).reduce((s,t) => s+t.jumlah, 0)
+  const aktif = metodeList.filter(m =>
+    sumber.some(t => t.metode === m)
   );
-  const nilaiKeluar = metodeList.map(m =>
-    sumber.filter(t => t.tipe === 'keluar' && t.metode === m).reduce((s,t) => s+t.jumlah, 0)
-  );
-
-  // Hanya tampilkan metode yang ada transaksinya
-  const aktif = metodeList.filter((m, i) => nilaiMasuk[i] > 0 || nilaiKeluar[i] > 0);
   const masukAktif = aktif.map(m =>
     sumber.filter(t => t.tipe === 'masuk' && t.metode === m).reduce((s,t) => s+t.jumlah, 0)
   );
@@ -275,15 +262,11 @@ function renderGrafikSaldo(data) {
   });
 }
 
-// ======= BUDGET =======
 function simpanBudget() {
   const kat = document.getElementById('budget-kat').value;
   const nominal = parseFloat(document.getElementById('budget-nominal').value);
   if (!nominal || nominal <= 0) { alert('Isi nominal anggaran!'); return; }
-  const budgetKatRef = ref(db, 'budget/' + kat);
-  import("https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js").then(({ set }) => {
-    set(budgetKatRef, nominal);
-  });
+  set(ref(db, 'budget/' + kat), nominal);
   document.getElementById('budget-nominal').value = '';
 }
 
@@ -335,19 +318,16 @@ function renderBudget() {
   }).join('');
 }
 
-// ======= EXPORT EXCEL =======
 function exportExcel() {
   if (transaksi.length === 0) { alert('Belum ada data untuk diekspor!'); return; }
-
   const data = transaksi.map(t => ({
     'Tanggal': t.tanggal,
     'Keterangan': t.keterangan,
-    'Jenis': t.tipe === 'masuk' ? 'Pemasukan' : 'Pengeluaran',
+    'Jenis': t.tipe === 'masuk' ? 'Pemasukan' : t.tipe === 'transfer' ? 'Transfer' : 'Pengeluaran',
     'Kategori': t.kategori,
     'Metode': t.metode,
     'Jumlah (Rp)': t.jumlah
   }));
-
   const ws = XLSX.utils.json_to_sheet(data);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Transaksi');
@@ -355,68 +335,6 @@ function exportExcel() {
   XLSX.writeFile(wb, 'keuangan-keluarga.xlsx');
 }
 
-// Expose fungsi ke global scope
-window.setType = setType;
-window.tambahTransaksi = tambahTransaksi;
-window.hapus = hapus;
-window.simpanBudget = simpanBudget;
-window.hapusBudget = hapusBudget;
-window.exportExcel = exportExcel;
-window.render = render;
-/* ======= RESPONSIVE MOBILE ======= */
-@media (max-width: 768px) {
-  .container {
-    padding: 16px;
-    grid-template-columns: 1fr;
-    grid-template-areas:
-      "summary"
-      "form"
-      "budget"
-      "grafik"
-      "riwayat";
-  }
-
-  .summary {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .summary .card:first-child {
-    grid-column: span 2;
-  }
-
-  .form-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .budget-form {
-    flex-direction: column;
-  }
-
-  .budget-form select,
-  .budget-form input,
-  .budget-form .btn-simpan {
-    width: 100%;
-    min-width: unset;
-  }
-
-  .topbar-inner {
-    padding: 12px 16px;
-  }
-
-  .logo {
-    font-size: 16px;
-  }
-
-  .btn-export {
-    font-size: 12px;
-    padding: 6px 10px;
-  }
-
-  .card h2 {
-    font-size: 15px;
-  }
-}
-// ======= TRANSFER =======
 function lakukanTransfer() {
   const dari = document.getElementById('transfer-dari').value;
   const ke = document.getElementById('transfer-ke').value;
@@ -427,7 +345,6 @@ function lakukanTransfer() {
   if (!jumlah || jumlah <= 0) { alert('Isi jumlah transfer!'); return; }
   if (!tanggal) { alert('Isi tanggal transfer!'); return; }
 
-  // Catat sebagai pengeluaran dari akun asal
   push(transaksiRef, {
     id: Date.now(),
     tipe: 'keluar',
@@ -438,7 +355,6 @@ function lakukanTransfer() {
     metode: dari
   });
 
-  // Catat sebagai pemasukan ke akun tujuan
   push(transaksiRef, {
     id: Date.now() + 1,
     tipe: 'masuk',
@@ -453,4 +369,11 @@ function lakukanTransfer() {
   alert(`Transfer ${formatRupiah(jumlah)} dari ${dari} ke ${ke} berhasil!`);
 }
 
+window.setType = setType;
+window.tambahTransaksi = tambahTransaksi;
+window.hapus = hapus;
+window.simpanBudget = simpanBudget;
+window.hapusBudget = hapusBudget;
+window.exportExcel = exportExcel;
+window.render = render;
 window.lakukanTransfer = lakukanTransfer;

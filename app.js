@@ -181,16 +181,22 @@ function render() {
   document.getElementById('saldo').textContent = formatRupiah(Math.abs(saldo));
   document.getElementById('saldo').style.color = saldo < 0 ? '#dc2626' : '#1e293b';
 
-  // Saldo per rekening
+  // Saldo per rekening - hanya tampil yang ada transaksinya
   metodeList.forEach(m => {
+    const adaTransaksi = transaksi.some(t => t.metode === m);
+    const kartu = document.getElementById('saldo-' + m);
+    if (!kartu) return;
+    const wrapper = kartu.closest('.card');
+    if (!adaTransaksi) {
+      if (wrapper) wrapper.style.display = 'none';
+      return;
+    }
+    if (wrapper) wrapper.style.display = 'block';
     const masuk = transaksi.filter(t => t.tipe === 'masuk' && t.metode === m && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
     const keluar = transaksi.filter(t => t.tipe === 'keluar' && t.metode === m && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
     const saldoM = masuk - keluar;
-    const el = document.getElementById('saldo-' + m);
-    if (el) {
-      el.textContent = formatRupiah(Math.abs(saldoM));
-      el.style.color = saldoM < 0 ? '#dc2626' : '#1e293b';
-    }
+    kartu.textContent = formatRupiah(Math.abs(saldoM));
+    kartu.style.color = saldoM < 0 ? '#dc2626' : '#1e293b';
   });
 
   // Riwayat transaksi full

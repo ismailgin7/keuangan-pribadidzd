@@ -194,6 +194,7 @@ function render() {
     if (wrapper) wrapper.style.display = 'block';
     const masuk = transaksi.filter(t => t.tipe === 'masuk' && t.metode === m).reduce((s,t) => s+t.jumlah, 0);
     const keluar = transaksi.filter(t => t.tipe === 'keluar' && t.metode === m).reduce((s,t) => s+t.jumlah, 0);
+    const saldoM = masuk - keluar;
     kartu.textContent = formatRupiah(Math.abs(saldoM));
     kartu.style.color = saldoM < 0 ? '#dc2626' : '#1e293b';
   });

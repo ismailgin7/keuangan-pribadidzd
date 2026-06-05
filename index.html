@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Keuangan Pribadi</title>
+  <title>Keuangan Saya</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
@@ -11,42 +11,68 @@
 <body>
 
   <div class="topbar">
-    <div class="topbar-inner">
-      <span class="logo">💰 Keuangan Saya</span>
-      <button class="btn-export" onclick="exportExcel()">⬇ Export Excel</button>
-    </div>
+    <span class="logo">💰 Keuangan Saya</span>
+    <button class="btn-export" onclick="exportExcel()">⬇ Export Excel</button>
   </div>
 
-  <div class="container">
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="gotoTab('ringkasan', this)">Ringkasan</button>
+    <button class="nav-tab" onclick="gotoTab('transaksi', this)">Transaksi</button>
+    <button class="nav-tab" onclick="gotoTab('anggaran', this)">Anggaran</button>
+    <button class="nav-tab" onclick="gotoTab('hutang', this)">Hutang & Piutang</button>
+    <button class="nav-tab" onclick="gotoTab('grafik', this)">Grafik</button>
+  </div>
 
-    <div class="summary">
+  <!-- TAB RINGKASAN -->
+  <div id="tab-ringkasan" class="tab-content active">
+    <div class="cards-grid">
       <div class="card">
         <p>Saldo Total</p>
         <h2 id="saldo">Rp 0</h2>
+        <span class="card-sub">Bank + Cash</span>
       </div>
       <div class="card income">
-        <p>Pemasukan</p>
+        <p>Pemasukan bulan ini</p>
         <h2 id="total-masuk">Rp 0</h2>
       </div>
       <div class="card expense">
-        <p>Pengeluaran</p>
+        <p>Pengeluaran bulan ini</p>
         <h2 id="total-keluar">Rp 0</h2>
-      </div>
-      <div class="card">
-        <p>Saldo Bank</p>
-        <h2 id="saldo-bank">Rp 0</h2>
-      </div>
-      <div class="card">
-        <p>Saldo Cash</p>
-        <h2 id="saldo-cash">Rp 0</h2>
-      </div>
-      <div class="card expense">
-        <p>Total Anggaran</p>
-        <h2 id="total-anggaran">Rp 0</h2>
       </div>
       <div class="card">
         <p>Sisa Anggaran</p>
         <h2 id="sisa-anggaran">Rp 0</h2>
+      </div>
+    </div>
+
+    <div class="cards-grid" style="grid-template-columns: repeat(5,1fr)">
+      <div class="card">
+        <p>Saldo Cash</p>
+        <h2 id="saldo-cash">Rp 0</h2>
+      </div>
+      <div class="card">
+        <p>Saldo BNI</p>
+        <h2 id="saldo-BNI">Rp 0</h2>
+      </div>
+      <div class="card">
+        <p>Saldo BSI</p>
+        <h2 id="saldo-BSI">Rp 0</h2>
+      </div>
+      <div class="card">
+        <p>Saldo DANA</p>
+        <h2 id="saldo-DANA">Rp 0</h2>
+      </div>
+      <div class="card">
+        <p>Saldo OVO</p>
+        <h2 id="saldo-OVO">Rp 0</h2>
+      </div>
+      <div class="card">
+        <p>Saldo SeaBank</p>
+        <h2 id="saldo-SeaBank">Rp 0</h2>
+      </div>
+      <div class="card">
+        <p>Saldo GoPay</p>
+        <h2 id="saldo-GoPay">Rp 0</h2>
       </div>
       <div class="card income">
         <p>Total Piutang</p>
@@ -56,155 +82,205 @@
         <p>Total Hutang</p>
         <h2 id="total-hutang">Rp 0</h2>
       </div>
+      <div class="card expense">
+        <p>Total Anggaran</p>
+        <h2 id="total-anggaran">Rp 0</h2>
+      </div>
     </div>
 
-    <div class="form-box form-box-form">
-      <h3>Tambah Transaksi</h3>
+    <div class="two-col">
+      <div class="section-box">
+        <div class="section-title">Transaksi terakhir</div>
+        <ul id="list-transaksi-mini" class="tx-list-mini"></ul>
+      </div>
+      <div class="section-box">
+        <div class="section-title">Anggaran bulan ini</div>
+        <div id="budget-mini"></div>
+      </div>
+    </div>
+  </div>
 
-      <div class="type-toggle">
-        <button id="btn-masuk" class="active-income" onclick="setType('masuk')">⬆ Pemasukan</button>
-        <button id="btn-keluar" onclick="setType('keluar')">⬇ Pengeluaran</button>
-        <button id="btn-transfer" onclick="setType('transfer')">↔ Transfer</button>
+  <!-- TAB TRANSAKSI -->
+  <div id="tab-transaksi" class="tab-content">
+    <div class="two-col">
+      <div class="section-box">
+        <div class="section-title">Tambah Transaksi</div>
+        <div class="type-toggle">
+          <button id="btn-masuk" class="active-income" onclick="setType('masuk')">⬆ Pemasukan</button>
+          <button id="btn-keluar" onclick="setType('keluar')">⬇ Pengeluaran</button>
+          <button id="btn-transfer" onclick="setType('transfer')">↔ Transfer</button>
+        </div>
+
+        <div id="form-utama">
+          <div class="form-grid">
+            <input type="text" id="keterangan" placeholder="Keterangan" />
+            <input type="number" id="jumlah" placeholder="Jumlah (Rp)" min="0" />
+            <select id="kategori">
+              <option value="Gaji">Gaji</option>
+              <option value="Usaha">Usaha</option>
+              <option value="Investasi">Investasi</option>
+              <option value="Piutang">Piutang</option>
+              <option value="Tabungan">Tabungan</option>
+              <option value="Lainnya">Lainnya</option>
+            </select>
+            <input type="date" id="tanggal" />
+            <select id="metode">
+              <option value="Cash">💵 Cash</option>
+              <option value="BNI">🏦 BNI</option>
+              <option value="BSI">🏦 BSI</option>
+              <option value="DANA">🏦 DANA</option>
+              <option value="OVO">🏦 OVO</option>
+              <option value="SeaBank">🏦 SeaBank</option>
+              <option value="GoPay">🏦 GoPay</option>
+            </select>
+          </div>
+          <button class="btn-simpan" onclick="tambahTransaksi()">+ Simpan Transaksi</button>
+        </div>
+
+        <div id="form-transfer" style="display:none">
+          <p style="font-size:13px;color:#94a3b8;margin-bottom:12px">Transfer tidak dihitung sebagai pemasukan atau pengeluaran.</p>
+          <div class="form-grid">
+            <div>
+              <label style="font-size:12px;color:#94a3b8;display:block;margin-bottom:4px">Dari</label>
+              <select id="transfer-dari" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;background:#f8fafc;font-family:'Inter',sans-serif">
+                <option value="Cash">💵 Cash</option>
+                <option value="BNI">🏦 BNI</option>
+                <option value="BSI">🏦 BSI</option>
+                <option value="DANA">🏦 DANA</option>
+                <option value="OVO">🏦 OVO</option>
+                <option value="SeaBank">🏦 SeaBank</option>
+                <option value="GoPay">🏦 GoPay</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:12px;color:#94a3b8;display:block;margin-bottom:4px">Ke</label>
+              <select id="transfer-ke" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;background:#f8fafc;font-family:'Inter',sans-serif">
+                <option value="BNI">🏦 BNI</option>
+                <option value="BSI">🏦 BSI</option>
+                <option value="DANA">🏦 DANA</option>
+                <option value="OVO">🏦 OVO</option>
+                <option value="SeaBank">🏦 SeaBank</option>
+                <option value="GoPay">🏦 GoPay</option>
+                <option value="Cash">💵 Cash</option>
+              </select>
+            </div>
+          </div>
+          <input type="number" id="transfer-jumlah" placeholder="Jumlah transfer (Rp)" min="0" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;background:#f8fafc;margin-top:10px;margin-bottom:10px;font-family:'Inter',sans-serif" />
+          <input type="date" id="transfer-tanggal" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;background:#f8fafc;margin-bottom:12px;font-family:'Inter',sans-serif" />
+          <button class="btn-simpan" onclick="lakukanTransfer()">↔ Simpan Transfer</button>
+        </div>
       </div>
 
-      <!-- Form Pemasukan & Pengeluaran -->
-      <div id="form-utama">
-        <div class="form-grid" id="form-grid-utama">
-          <input type="text" id="keterangan" placeholder="Keterangan (mis. Gaji)" />
-          <input type="number" id="jumlah" placeholder="Jumlah (Rp)" min="0" />
-          <select id="kategori">
-            <option value="Gaji">Gaji</option>
-            <option value="Usaha">Usaha</option>
-            <option value="Investasi">Investasi</option>
+      <div class="section-box">
+        <div class="section-title" style="display:flex;justify-content:space-between;align-items:center">
+          <span>Riwayat Transaksi</span>
+          <select id="filter-bulan" onchange="render()" style="font-size:12px;padding:4px 8px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;font-family:'Inter',sans-serif">
+            <option value="">Semua Bulan</option>
+          </select>
+        </div>
+        <ul id="list-transaksi" class="tx-list"></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB ANGGARAN -->
+  <div id="tab-anggaran" class="tab-content">
+    <div class="two-col">
+      <div class="section-box">
+        <div class="section-title">Set Anggaran Bulanan</div>
+        <div class="budget-form">
+          <select id="budget-kat">
+            <option value="LAG">LAG</option>
+            <option value="Sembako">Sembako</option>
+            <option value="Toiletris">Toiletris</option>
+            <option value="Pengasuh">Pengasuh</option>
+            <option value="Kebutuhan Anak">Kebutuhan Anak</option>
+            <option value="Liburan">Liburan</option>
+            <option value="Makan">Makan</option>
+            <option value="Transport">Transport</option>
+            <option value="Tagihan">Tagihan</option>
+            <option value="Kesehatan">Kesehatan</option>
+            <option value="Hiburan">Hiburan</option>
+            <option value="Pendidikan">Pendidikan</option>
             <option value="Lainnya">Lainnya</option>
           </select>
-          <input type="date" id="tanggal" />
-          <select id="metode">
-            <option value="Cash">💵 Cash</option>
-            <option value="BNI">🏦 BNI</option>
-            <option value="BSI">🏦 BSI</option>
-            <option value="DANA">🏦 DANA</option>
-            <option value="OVO">🏦 OVO</option>
-            <option value="SeaBank">🏦 SeaBank</option>
-            <option value="GoPay">🏦 GoPay</option>
-          </select>
+          <input type="number" id="budget-nominal" placeholder="Batas anggaran (Rp)" min="0" />
+          <button class="btn-simpan" onclick="simpanBudget()">Set Anggaran</button>
         </div>
-        <button class="btn-simpan" id="btn-simpan-utama" onclick="tambahTransaksi()">+ Simpan Transaksi</button>
       </div>
-
-      <!-- Form Transfer -->
-      <div id="form-transfer" style="display:none">
-        <p style="font-size:13px;color:#94a3b8;margin-bottom:12px">Pindahkan saldo antar rekening/dompet. Transfer tidak dihitung sebagai pemasukan atau pengeluaran.</p>
-        <div class="form-grid">
-          <div>
-            <label style="font-size:12px;color:#94a3b8;display:block;margin-bottom:4px">Dari</label>
-            <select id="transfer-dari" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;background:#f8fafc;font-family:'Inter',sans-serif">
-              <option value="Cash">💵 Cash</option>
-              <option value="BNI">🏦 BNI</option>
-              <option value="BSI">🏦 BSI</option>
-              <option value="DANA">🏦 DANA</option>
-              <option value="OVO">🏦 OVO</option>
-              <option value="SeaBank">🏦 SeaBank</option>
-              <option value="GoPay">🏦 GoPay</option>
-            </select>
-          </div>
-          <div>
-            <label style="font-size:12px;color:#94a3b8;display:block;margin-bottom:4px">Ke</label>
-            <select id="transfer-ke" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;background:#f8fafc;font-family:'Inter',sans-serif">
-              <option value="BNI">🏦 BNI</option>
-              <option value="BSI">🏦 BSI</option>
-              <option value="DANA">🏦 DANA</option>
-              <option value="OVO">🏦 OVO</option>
-              <option value="SeaBank">🏦 SeaBank</option>
-              <option value="GoPay">🏦 GoPay</option>
-              <option value="Cash">💵 Cash</option>
-            </select>
-          </div>
+      <div class="section-box">
+        <div class="section-title">Ringkasan Anggaran</div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px">
+          <span style="color:#94a3b8">Total anggaran</span>
+          <strong id="total-anggaran-tab">Rp 0</strong>
         </div>
-        <input type="number" id="transfer-jumlah" placeholder="Jumlah transfer (Rp)" min="0" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;background:#f8fafc;margin-top:10px;margin-bottom:10px;font-family:'Inter',sans-serif" />
-        <input type="date" id="transfer-tanggal" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;background:#f8fafc;margin-bottom:12px;font-family:'Inter',sans-serif" />
-        <button class="btn-simpan" onclick="lakukanTransfer()">↔ Simpan Transfer</button>
+        <div style="display:flex;justify-content:space-between;font-size:13px">
+          <span style="color:#94a3b8">Sisa anggaran</span>
+          <strong id="sisa-anggaran-tab">Rp 0</strong>
+        </div>
       </div>
     </div>
-
-    <div class="form-box form-box-grafik">
-      <h3>📊 Pemasukan & Pengeluaran per Kategori</h3>
-      <canvas id="grafikKategori"></canvas>
-      <h3 style="margin-top:24px">🏦 Saldo per Rekening</h3>
-      <canvas id="grafikSaldo"></canvas>
-    </div>
-
-    <div class="form-box form-box-budget">
-      <h3>🎯 Anggaran per Kategori</h3>
+    <div class="section-box" style="margin-top:12px">
+      <div class="section-title">Detail per Kategori</div>
       <div id="budget-list"></div>
-      <div class="budget-form">
-        <select id="budget-kat">
-          <option value="LAG">LAG</option>
-          <option value="Sembako">Sembako</option>
-          <option value="Toiletris">Toiletris</option>
-          <option value="Pengasuh">Pengasuh</option>
-          <option value="Kebutuhan Anak">Kebutuhan Anak</option>
-          <option value="Liburan">Liburan</option>
-          <option value="Makan">Makan</option>
-          <option value="Transport">Transport</option>
-          <option value="Tagihan">Tagihan</option>
-          <option value="Kesehatan">Kesehatan</option>
-          <option value="Hiburan">Hiburan</option>
-          <option value="Pendidikan">Pendidikan</option>
-          <option value="Lainnya">Lainnya</option>
-        </select>
-        <input type="number" id="budget-nominal" placeholder="Batas anggaran (Rp)" min="0" />
-        <button class="btn-simpan" onclick="simpanBudget()">Set Anggaran</button>
-      </div>
     </div>
-<div class="form-box form-box-hutang">
-      <h3>💳 Hutang & Piutang</h3>
+  </div>
 
-      <div class="hp-tabs">
-        <button class="hp-tab active" onclick="setHPTab('piutang', this)">💰 Piutang</button>
-        <button class="hp-tab" onclick="setHPTab('hutang', this)">💸 Hutang</button>
-      </div>
+  <!-- TAB HUTANG PIUTANG -->
+  <div id="tab-hutang" class="tab-content">
+    <div class="two-col">
+      <div class="section-box">
+        <div class="hp-tabs">
+          <button class="hp-tab active" onclick="setHPTab('piutang', this)">💰 Piutang</button>
+          <button class="hp-tab" onclick="setHPTab('hutang', this)">💸 Hutang</button>
+        </div>
+        <div id="hp-list"></div>
 
-      <div id="hp-list"></div>
+        <div style="margin-top:16px;border-top:1px solid #f1f5f9;padding-top:16px">
+          <div class="section-title">Tambah Baru</div>
+          <div class="budget-form">
+            <input type="text" id="hp-nama" placeholder="Nama orang" />
+            <input type="number" id="hp-jumlah" placeholder="Jumlah total (Rp)" min="0" />
+            <input type="date" id="hp-tanggal" />
+            <input type="text" id="hp-keterangan" placeholder="Keterangan (opsional)" />
+            <button class="btn-simpan" onclick="tambahHP()">+ Tambah</button>
+          </div>
+        </div>
 
-      <div class="budget-form" style="margin-top:12px">
-        <input type="text" id="hp-nama" placeholder="Nama orang" />
-        <input type="number" id="hp-jumlah" placeholder="Jumlah total (Rp)" min="0" />
-        <input type="date" id="hp-tanggal" />
-        <input type="text" id="hp-keterangan" placeholder="Keterangan (opsional)" />
-        <button class="btn-simpan" onclick="tambahHP()">+ Tambah</button>
-      </div>
-
-      <!-- Form Cicilan -->
-      <div id="form-cicilan" style="display:none;margin-top:12px;padding:12px;background:#f8fafc;border-radius:10px;border:1.5px solid #e2e8f0">
-        <p id="cicilan-label" style="font-size:13px;font-weight:600;margin-bottom:10px;color:#1e293b"></p>
-        <div class="budget-form">
-          <input type="number" id="cicilan-jumlah" placeholder="Jumlah bayar (Rp)" min="0" />
-          <input type="date" id="cicilan-tanggal" />
-          <input type="text" id="cicilan-keterangan" placeholder="Keterangan (opsional)" />
-          <button class="btn-simpan" onclick="simpanCicilan()">✓ Simpan Bayar</button>
-          <button onclick="tutupCicilan()" style="padding:10px;border:1.5px solid #e2e8f0;border-radius:10px;background:white;cursor:pointer;font-family:'Inter',sans-serif;font-size:14px">Batal</button>
+        <div id="form-cicilan" style="display:none;margin-top:12px;padding:12px;background:#f8fafc;border-radius:10px;border:1.5px solid #e2e8f0">
+          <p id="cicilan-label" style="font-size:13px;font-weight:600;margin-bottom:10px;color:#1e293b"></p>
+          <div class="budget-form">
+            <input type="number" id="cicilan-jumlah" placeholder="Jumlah bayar (Rp)" min="0" />
+            <input type="date" id="cicilan-tanggal" />
+            <input type="text" id="cicilan-keterangan" placeholder="Keterangan (opsional)" />
+            <button class="btn-simpan" onclick="simpanCicilan()">✓ Simpan Bayar</button>
+            <button onclick="tutupCicilan()" style="padding:10px;border:1.5px solid #e2e8f0;border-radius:10px;background:white;cursor:pointer;font-family:'Inter',sans-serif;font-size:14px">Batal</button>
+          </div>
         </div>
       </div>
 
-      <div style="margin-top:20px">
-        <h4 style="font-size:13px;font-weight:600;margin-bottom:10px;color:#1e293b">📊 Rincian per Orang</h4>
+      <div class="section-box">
+        <div class="section-title">Rincian per Orang</div>
         <div id="hp-grafik-list"></div>
       </div>
     </div>
-    <div class="form-box form-box-riwayat">
-      <h3>Riwayat Transaksi</h3>
-      <div class="filter-bulan">
-        <select id="filter-bulan" onchange="render()">
-          <option value="">Semua Bulan</option>
-        </select>
-      </div>
-      <ul id="list-transaksi">
-        <li class="kosong">Belum ada transaksi.</li>
-      </ul>
-    </div>
-
   </div>
+
+  <!-- TAB GRAFIK -->
+  <div id="tab-grafik" class="tab-content">
+    <div class="two-col">
+      <div class="section-box">
+        <div class="section-title">Pemasukan & Pengeluaran per Kategori</div>
+        <canvas id="grafikKategori"></canvas>
+      </div>
+      <div class="section-box">
+        <div class="section-title">Saldo per Rekening</div>
+        <canvas id="grafikSaldo"></canvas>
+      </div>
+    </div>
+  </div>
+
+</div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>

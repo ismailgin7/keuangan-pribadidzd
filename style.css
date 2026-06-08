@@ -342,3 +342,19 @@ body {
   .form-grid { grid-template-columns: 1fr; }
   .budget-form { flex-direction: column; }
 }
+.tx-edit {
+  background: #eff6ff;
+  border: none;
+  cursor: pointer;
+  color: #3b82f6;
+  font-size: 14px;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-right: 4px;
+}
+.tx-edit:hover { background: #dbeafe; }

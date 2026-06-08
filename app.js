@@ -233,17 +233,7 @@ function lakukanTransfer() {
 // ======= RENDER UTAMA =======
 function render() {
   const bulanIni = new Date().toISOString().slice(0, 7);
-  const semuaBulan = [...new Set(transaksi.map(t => t.tanggal.slice(0, 7)))].sort().reverse();
-  const filterEl = document.getElementById('filter-bulan');
-  const dipilih = filterEl.value;
-
-  filterEl.innerHTML = '<option value="">Semua Bulan</option>' +
-    semuaBulan.map(b => {
-      const [th, bl] = b.split('-');
-      const label = new Date(th, bl - 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
-      return `<option value="${b}" ${dipilih === b ? 'selected' : ''}>${label}</option>`;
-    }).join('');
-
+  
   // Update dropdown bulan
   const semuaBulan = [...new Set(transaksi.map(t => t.tanggal.slice(0, 7)))].sort().reverse();
   const filterEl = document.getElementById('filter-bulan');

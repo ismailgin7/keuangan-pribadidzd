@@ -26,7 +26,7 @@ let hpData = [];
 let hpTab = 'piutang';
 let cicilanTargetKey = null;
 
-const metodeList = ['cash', 'BNI', 'BSI', 'DANA', 'OVO', 'SeaBank', 'GoPay'];
+const metodeList = ['Cash', 'BNI', 'BSI', 'DANA', 'OVO', 'SeaBank', 'GoPay'];
 
 document.getElementById('tanggal').valueAsDate = new Date();
 

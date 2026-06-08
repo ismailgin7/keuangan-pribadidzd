@@ -232,9 +232,7 @@ function lakukanTransfer() {
 
 // ======= RENDER UTAMA =======
 function render() {
-  const bulanIni = new Date().toISOString().slice(0, 7);
-  
-  // Update dropdown bulan
+    // Update dropdown bulan
   const semuaBulan = [...new Set(transaksi.map(t => t.tanggal.slice(0, 7)))].sort().reverse();
   const filterEl = document.getElementById('filter-bulan');
   const dipilih = filterEl ? filterEl.value : '';

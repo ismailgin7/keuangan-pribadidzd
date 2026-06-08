@@ -548,6 +548,155 @@ function exportExcel() {
   XLSX.writeFile(wb, 'keuangan-keluarga.xlsx');
 }
 
+// ======= TARGET KEUANGAN =======
+const targetRef = ref(db, 'target');
+let targetData = [];
+let targetDanaKey = null;
+
+onValue(targetRef, (snapshot) => {
+  targetData = [];
+  snapshot.forEach((child) => {
+    targetData.unshift({ _key: child.key, ...child.val() });
+  });
+  renderTarget();
+});
+
+function tambahTarget() {
+  const nama = document.getElementById('target-nama').value.trim();
+  const jumlah = parseFloat(document.getElementById('target-jumlah').value);
+  const emoji = document.getElementById('target-emoji').value.trim() || '🎯';
+  const deadline = document.getElementById('target-deadline').value;
+
+  if (!nama || !jumlah || jumlah <= 0) { alert('Isi nama dan jumlah target!'); return; }
+
+  push(targetRef, { nama, jumlah, emoji, deadline: deadline || null, terkumpul: 0, createdAt: Date.now() });
+
+  document.getElementById('target-nama').value = '';
+  document.getElementById('target-jumlah').value = '';
+  document.getElementById('target-emoji').value = '';
+  document.getElementById('target-deadline').value = '';
+}
+
+function hapusTarget(key) {
+  if (!confirm('Hapus target ini?')) return;
+  remove(ref(db, 'target/' + key));
+}
+
+function bukaDanaTarget(key, nama, sisa) {
+  targetDanaKey = key;
+  document.getElementById('target-dana-label').textContent = `Tambah dana untuk: ${nama} (Kurang: ${formatRupiah(sisa)})`;
+  document.getElementById('target-dana-jumlah').value = '';
+  document.getElementById('target-dana-tanggal').valueAsDate = new Date();
+  document.getElementById('form-target-dana').style.display = 'block';
+  document.getElementById('form-target-dana').scrollIntoView({ behavior: 'smooth' });
+}
+
+function tutupDanaTarget() {
+  targetDanaKey = null;
+  document.getElementById('form-target-dana').style.display = 'none';
+}
+
+function simpanDanaTarget() {
+  if (!targetDanaKey) return;
+  const jumlah = parseFloat(document.getElementById('target-dana-jumlah').value);
+  if (!jumlah || jumlah <= 0) { alert('Isi jumlah dana!'); return; }
+
+  const target = targetData.find(t => t._key === targetDanaKey);
+  if (!target) return;
+
+  const terkumpulBaru = (target.terkumpul || 0) + jumlah;
+  set(ref(db, 'target/' + targetDanaKey + '/terkumpul'), terkumpulBaru);
+  tutupDanaTarget();
+}
+
+function renderTarget() {
+  const list = document.getElementById('target-list');
+  const ringkasan = document.getElementById('target-ringkasan');
+  if (!list) return;
+
+  // Ringkasan
+  const totalTarget = targetData.length;
+  const tercapai = targetData.filter(t => (t.terkumpul || 0) >= t.jumlah).length;
+  const totalDana = targetData.reduce((s, t) => s + (t.terkumpul || 0), 0);
+  const totalDibutuhkan = targetData.reduce((s, t) => s + t.jumlah, 0);
+
+  if (ringkasan) {
+    ringkasan.innerHTML = `
+      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px">
+        <span style="color:#94a3b8">Total target</span>
+        <strong>${totalTarget} target</strong>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px">
+        <span style="color:#94a3b8">Sudah tercapai</span>
+        <strong style="color:#16a34a">${tercapai} target ✅</strong>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px">
+        <span style="color:#94a3b8">Total terkumpul</span>
+        <strong style="color:#6366f1">${formatRupiah(totalDana)}</strong>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:13px">
+        <span style="color:#94a3b8">Total dibutuhkan</span>
+        <strong>${formatRupiah(totalDibutuhkan)}</strong>
+      </div>
+    `;
+  }
+
+  if (targetData.length === 0) {
+    list.innerHTML = '<p style="font-size:13px;color:#aaa;text-align:center;padding:20px">Belum ada target. Tambahkan target keuanganmu!</p>';
+    return;
+  }
+
+  list.innerHTML = targetData.map(t => {
+    const terkumpul = t.terkumpul || 0;
+    const sisa = t.jumlah - terkumpul;
+    const persen = Math.min((terkumpul / t.jumlah) * 100, 100).toFixed(1);
+    const tercapai = sisa <= 0;
+    const warna = tercapai ? '#16a34a' : persen >= 75 ? '#6366f1' : persen >= 40 ? '#f59e0b' : '#94a3b8';
+
+    let deadlineInfo = '';
+    if (t.deadline) {
+      const tgl = new Date(t.deadline);
+      const hari = Math.ceil((tgl - new Date()) / (1000 * 60 * 60 * 24));
+      const tglFormat = tgl.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+      if (hari < 0) {
+        deadlineInfo = `<span style="color:#dc2626;font-size:11px">⚠️ Deadline terlewat ${Math.abs(hari)} hari lalu</span>`;
+      } else if (hari <= 30) {
+        deadlineInfo = `<span style="color:#f59e0b;font-size:11px">⏰ ${hari} hari lagi (${tglFormat})</span>`;
+      } else {
+        deadlineInfo = `<span style="color:#94a3b8;font-size:11px">📅 ${tglFormat}</span>`;
+      }
+    }
+
+    return `
+      <div class="budget-item" style="background:white;border:1px solid #f1f5f9;border-radius:12px;padding:16px;margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+          <div>
+            <span style="font-size:20px;margin-right:8px">${t.emoji}</span>
+            <span style="font-size:15px;font-weight:600;color:#1e293b">${t.nama} ${tercapai ? '✅' : ''}</span>
+          </div>
+          <button class="budget-hapus" onclick="hapusTarget('${t._key}')" style="font-size:14px">🗑</button>
+        </div>
+        ${deadlineInfo ? `<div style="margin-bottom:8px">${deadlineInfo}</div>` : ''}
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:#94a3b8;margin-bottom:6px">
+          <span>Terkumpul: <strong style="color:#1e293b">${formatRupiah(terkumpul)}</strong></span>
+          <span>Target: <strong style="color:#1e293b">${formatRupiah(t.jumlah)}</strong></span>
+        </div>
+        <div class="budget-bar-track" style="height:10px">
+          <div class="budget-bar-fill" style="width:${persen}%;background:${warna}"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+          <span style="font-size:12px;color:${warna};font-weight:600">${persen}% tercapai</span>
+          <div style="display:flex;gap:6px">
+            ${!tercapai ? `
+              <span style="font-size:12px;color:#94a3b8">Kurang ${formatRupiah(sisa)}</span>
+              <button class="hp-lunas" onclick="bukaDanaTarget('${t._key}','${t.nama}',${sisa})">+ Tambah Dana</button>
+            ` : `<span style="font-size:12px;color:#16a34a;font-weight:600">Target tercapai! 🎉</span>`}
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
 window.gotoTab = gotoTab;
 window.setType = setType;
 window.tambahTransaksi = tambahTransaksi;
@@ -563,3 +712,8 @@ window.tutupCicilan = tutupCicilan;
 window.simpanCicilan = simpanCicilan;
 window.exportExcel = exportExcel;
 window.render = render;
+window.tambahTarget = tambahTarget;
+window.hapusTarget = hapusTarget;
+window.bukaDanaTarget = bukaDanaTarget;
+window.tutupDanaTarget = tutupDanaTarget;
+window.simpanDanaTarget = simpanDanaTarget;

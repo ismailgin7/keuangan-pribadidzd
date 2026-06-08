@@ -358,3 +358,33 @@ body {
   margin-right: 4px;
 }
 .tx-edit:hover { background: #dbeafe; }
+/* FILTER CUSTOM */
+.filter-wrap { margin-bottom: 12px; }
+
+.filter-type-toggle {
+  display: flex;
+  gap: 4px;
+  background: #f8fafc;
+  padding: 4px;
+  border-radius: 10px;
+}
+
+.filter-type-btn {
+  flex: 1;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  color: #94a3b8;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.15s;
+}
+
+.filter-type-btn.active {
+  background: white;
+  color: #6366f1;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}

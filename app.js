@@ -24,6 +24,7 @@ let grafikSaldoInstance = null;
 let budget = {};
 let hpData = [];
 let hpTab = 'piutang';
+let filterType = 'semua';
 let cicilanTargetKey = null;
 
 const metodeList = ['Cash', 'BNI', 'BSI', 'DANA', 'OVO', 'SeaBank', 'GoPay'];
@@ -65,6 +66,21 @@ function gotoTab(tabId, el) {
 // ======= FORMAT =======
 function formatRupiah(angka) {
   return 'Rp ' + Math.round(angka).toLocaleString('id-ID');
+}
+function setFilterType(type, el) {
+  filterType = type;
+  document.querySelectorAll('.filter-type-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+
+  document.getElementById('filter-bulan-wrap').style.display = 'none';
+  document.getElementById('filter-rentang-wrap').style.display = 'none';
+  document.getElementById('filter-tanggal-wrap').style.display = 'none';
+
+  if (type === 'bulan') document.getElementById('filter-bulan-wrap').style.display = 'block';
+  if (type === 'rentang') document.getElementById('filter-rentang-wrap').style.display = 'flex';
+  if (type === 'tanggal') document.getElementById('filter-tanggal-wrap').style.display = 'block';
+
+  render();
 }
 
 // ======= TRANSAKSI =======
@@ -228,7 +244,37 @@ function render() {
       return `<option value="${b}" ${dipilih === b ? 'selected' : ''}>${label}</option>`;
     }).join('');
 
-  const filtered = dipilih ? transaksi.filter(t => t.tanggal.slice(0, 7) === dipilih) : transaksi;
+  // Update dropdown bulan
+  const semuaBulan = [...new Set(transaksi.map(t => t.tanggal.slice(0, 7)))].sort().reverse();
+  const filterEl = document.getElementById('filter-bulan');
+  const dipilih = filterEl ? filterEl.value : '';
+  if (filterEl) {
+    filterEl.innerHTML = '<option value="">Pilih Bulan</option>' +
+      semuaBulan.map(b => {
+        const [th, bl] = b.split('-');
+        const label = new Date(th, bl - 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+        return `<option value="${b}" ${dipilih === b ? 'selected' : ''}>${label}</option>`;
+      }).join('');
+  }
+
+  // Filter berdasarkan tipe
+  let filtered = transaksi;
+  if (filterType === 'bulan' && dipilih) {
+    filtered = transaksi.filter(t => t.tanggal.slice(0, 7) === dipilih);
+  } else if (filterType === 'rentang') {
+    const dari = document.getElementById('filter-dari')?.value;
+    const sampai = document.getElementById('filter-sampai')?.value;
+    if (dari && sampai) {
+      filtered = transaksi.filter(t => t.tanggal >= dari && t.tanggal <= sampai);
+    } else if (dari) {
+      filtered = transaksi.filter(t => t.tanggal >= dari);
+    } else if (sampai) {
+      filtered = transaksi.filter(t => t.tanggal <= sampai);
+    }
+  } else if (filterType === 'tanggal') {
+    const tgl = document.getElementById('filter-tanggal-val')?.value;
+    if (tgl) filtered = transaksi.filter(t => t.tanggal === tgl);
+  }
   const filteredBulanIni = transaksi.filter(t => t.tanggal.slice(0, 7) === bulanIni);
 
   // Kartu dashboard - pemasukan & pengeluaran bulan ini
@@ -907,6 +953,7 @@ window.simpanCicilan = simpanCicilan;
 window.exportExcel = exportExcel;
 window.editTransaksi = editTransaksi;
 window.render = render;
+window.setFilterType = setFilterType;
 window.tambahTarget = tambahTarget;
 window.editBudget = editBudget;
 window.hapusTarget = hapusTarget;

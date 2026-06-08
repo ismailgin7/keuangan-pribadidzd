@@ -143,7 +143,7 @@
               <option value="GoPay">🏦 GoPay</option>
             </select>
           </div>
-          <button class="btn-simpan" onclick="tambahTransaksi()">+ Simpan Transaksi</button>
+          <button class="btn-simpan" id="btn-simpan-transaksi" onclick="tambahTransaksi()">+ Simpan Transaksi</button>
         </div>
 
         <div id="form-transfer" style="display:none">
@@ -204,17 +204,27 @@
             <option value="Toiletris">Toiletris</option>
             <option value="Pengasuh">Pengasuh</option>
             <option value="Kebutuhan Anak">Kebutuhan Anak</option>
+            <option value="Sekolah Anak">Sekolah Anak</option>
             <option value="Liburan">Liburan</option>
             <option value="Makan">Makan</option>
             <option value="Transport">Transport</option>
-            <option value="Tagihan">Tagihan</option>
+            <option value="BBM">BBM</option>
+            <option value="Belanja">Belanja</option>
+            <option value="Listrik">Listrik</option>
+            <option value="Air">Air</option>
+            <option value="Internet">Internet</option>
+            <option value="Pulsa">Pulsa</option>
             <option value="Kesehatan">Kesehatan</option>
+            <option value="Pajak">Pajak</option>
+            <option value="Asuransi">Asuransi</option>
+            <option value="Sedekah">Sedekah</option>
+            <option value="Investasi">Investasi</option>
             <option value="Hiburan">Hiburan</option>
             <option value="Pendidikan">Pendidikan</option>
             <option value="Lainnya">Lainnya</option>
           </select>
           <input type="number" id="budget-nominal" placeholder="Batas anggaran (Rp)" min="0" />
-          <button class="btn-simpan" onclick="simpanBudget()">Set Anggaran</button>
+          <button class="btn-simpan" id="btn-simpan-budget" onclick="simpanBudget()">Set Anggaran</button>
         </div>
       </div>
       <div class="section-box">
@@ -252,7 +262,7 @@
             <input type="number" id="hp-jumlah" placeholder="Jumlah total (Rp)" min="0" />
             <input type="date" id="hp-tanggal" />
             <input type="text" id="hp-keterangan" placeholder="Keterangan (opsional)" />
-            <button class="btn-simpan" onclick="tambahHP()">+ Tambah</button>
+            <button class="btn-simpan" id="btn-simpan-hp" onclick="tambahHP()">+ Tambah</button>
           </div>
         </div>
 
@@ -287,7 +297,7 @@
           <input type="date" id="target-deadline" />
         </div>
         <p style="font-size:12px;color:#94a3b8;margin-bottom:10px">Deadline opsional — kosongkan kalau tidak ada batas waktu.</p>
-        <button class="btn-simpan" onclick="tambahTarget()">+ Tambah Target</button>
+        <button class="btn-simpan" id="btn-simpan-target" onclick="tambahTarget()">+ Tambah Target</button>
       </div>
       <div class="section-box">
         <div class="section-title">Ringkasan Target</div>

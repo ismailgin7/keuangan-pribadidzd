@@ -94,11 +94,21 @@ function setType(tipe) {
       <option value="Toiletris">Toiletris</option>
       <option value="Pengasuh">Pengasuh</option>
       <option value="Kebutuhan Anak">Kebutuhan Anak</option>
+      <option value="Sekolah Anak">Sekolah Anak</option>
       <option value="Liburan">Liburan</option>
       <option value="Makan">Makan</option>
       <option value="Transport">Transport</option>
-      <option value="Tagihan">Tagihan</option>
+      <option value="BBM">BBM</option>
+      <option value="Belanja">Belanja</option>
+      <option value="Listrik">Listrik</option>
+      <option value="Air">Air</option>
+      <option value="Internet">Internet</option>
+      <option value="Pulsa">Pulsa</option>
       <option value="Kesehatan">Kesehatan</option>
+      <option value="Pajak">Pajak</option>
+      <option value="Asuransi">Asuransi</option>
+      <option value="Sedekah">Sedekah</option>
+      <option value="Investasi">Investasi</option>
       <option value="Hiburan">Hiburan</option>
       <option value="Pendidikan">Pendidikan</option>
       <option value="Hutang">Hutang</option>
@@ -133,7 +143,61 @@ function hapus(key) {
   if (!confirm('Hapus transaksi ini?')) return;
   remove(ref(db, 'transaksi/' + key));
 }
+function editTransaksi(key) {
+  const t = transaksi.find(t => t._key === key);
+  if (!t) return;
 
+  // Pindah ke tab transaksi
+  document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(x => x.classList.remove('active'));
+  document.getElementById('tab-transaksi').classList.add('active');
+  document.querySelectorAll('.nav-tab')[1].classList.add('active');
+
+  // Isi form dengan data yang ada
+  setType(t.tipe === 'keluar' ? 'keluar' : 'masuk');
+  document.getElementById('keterangan').value = t.keterangan;
+  document.getElementById('jumlah').value = t.jumlah;
+  document.getElementById('tanggal').value = t.tanggal;
+  document.getElementById('metode').value = t.metode;
+
+  // Tunggu kategori terisi lalu set nilainya
+  setTimeout(() => {
+    document.getElementById('kategori').value = t.kategori;
+  }, 50);
+
+  // Ganti tombol simpan jadi update
+  const btn = document.getElementById('btn-simpan-transaksi');
+  btn.textContent = '✏️ Update Transaksi';
+  btn.onclick = () => updateTransaksi(key);
+
+  document.getElementById('keterangan').scrollIntoView({ behavior: 'smooth' });
+}
+
+function updateTransaksi(key) {
+  const keterangan = document.getElementById('keterangan').value.trim();
+  const jumlah = parseFloat(document.getElementById('jumlah').value);
+  const kategori = document.getElementById('kategori').value;
+  const tanggal = document.getElementById('tanggal').value;
+  const metode = document.getElementById('metode').value;
+
+  if (!keterangan || !jumlah || jumlah <= 0 || !tanggal) {
+    alert('Lengkapi semua kolom!');
+    return;
+  }
+
+  set(ref(db, 'transaksi/' + key), {
+    id: Date.now(),
+    tipe: tipeAktif,
+    keterangan, jumlah, kategori, tanggal, metode
+  });
+
+  // Reset tombol simpan
+  const btn = document.getElementById('btn-simpan-transaksi');
+  btn.textContent = '+ Simpan Transaksi';
+  btn.onclick = tambahTransaksi;
+  document.getElementById('keterangan').value = '';
+  document.getElementById('jumlah').value = '';
+}
 function lakukanTransfer() {
   const dari = document.getElementById('transfer-dari').value;
   const ke = document.getElementById('transfer-ke').value;
@@ -228,7 +292,8 @@ function render() {
             <div class="tx-meta">${t.kategori} · ${t.metode} · ${tgl}</div>
           </div>
           <div class="tx-nominal ${t.tipe}">${sign}${formatRupiah(t.jumlah)}</div>
-          <button class="tx-hapus" onclick="hapus('${t._key}')">🗑</button>
+          <button class="tx-edit" onclick="editTransaksi('${t._key}')">✏️</button>
+        <button class="tx-hapus" onclick="hapus('${t._key}')">🗑</button>
         </li>
       `;
     }).join('');
@@ -268,7 +333,35 @@ function simpanBudget() {
 function hapusBudget(kat) {
   remove(ref(db, 'budget/' + kat));
 }
+function editBudget(kat, nominal) {
+  document.getElementById('budget-kat').value = kat;
+  document.getElementById('budget-nominal').value = nominal;
 
+  // Pindah ke tab anggaran
+  document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(x => x.classList.remove('active'));
+  document.getElementById('tab-anggaran').classList.add('active');
+  document.querySelectorAll('.nav-tab')[2].classList.add('active');
+
+  // Ganti tombol jadi update
+  const btn = document.getElementById('btn-simpan-budget');
+  btn.textContent = '✏️ Update Anggaran';
+  btn.onclick = () => updateBudget(kat);
+
+  document.getElementById('budget-nominal').scrollIntoView({ behavior: 'smooth' });
+}
+
+function updateBudget(kat) {
+  const nominal = parseFloat(document.getElementById('budget-nominal').value);
+  if (!nominal || nominal <= 0) { alert('Isi nominal anggaran!'); return; }
+  set(ref(db, 'budget/' + kat), nominal);
+
+  // Reset tombol
+  const btn = document.getElementById('btn-simpan-budget');
+  btn.textContent = 'Set Anggaran';
+  btn.onclick = simpanBudget;
+  document.getElementById('budget-nominal').value = '';
+}
 function renderBudget() {
   const bulanIni = new Date().toISOString().slice(0, 7);
   const keys = Object.keys(budget);
@@ -345,7 +438,7 @@ function renderBudget() {
     return `
       <div class="budget-item">
         <div class="budget-header">
-          <span>${kat} <button class="budget-hapus" onclick="hapusBudget('${kat}')">✕</button></span>
+          <span>${kat} <button class="budget-hapus" onclick="editBudget('${kat}',${batas})" style="color:#3b82f6;margin-right:2px">✏️</button><button class="budget-hapus" onclick="hapusBudget('${kat}')">✕</button></span>
           <span class="budget-angka">${formatRupiah(terpakai)} / ${formatRupiah(batas)}</span>
         </div>
         <div class="budget-bar-track">
@@ -437,7 +530,58 @@ function tandaiLunas(key) {
   if (!confirm('Hapus data ini?')) return;
   remove(ref(db, 'hutangpiutang/' + key));
 }
+function editHP(key) {
+  const h = hpData.find(h => h._key === key);
+  if (!h) return;
 
+  // Pindah ke tab hutang piutang
+  document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(x => x.classList.remove('active'));
+  document.getElementById('tab-hutang').classList.add('active');
+  document.querySelectorAll('.nav-tab')[3].classList.add('active');
+
+  // Set tab yang sesuai
+  hpTab = h.tipe;
+  document.querySelectorAll('.hp-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.hp-tab')[h.tipe === 'piutang' ? 0 : 1].classList.add('active');
+
+  // Isi form
+  document.getElementById('hp-nama').value = h.nama;
+  document.getElementById('hp-jumlah').value = h.jumlah;
+  document.getElementById('hp-tanggal').value = h.tanggal;
+  document.getElementById('hp-keterangan').value = h.keterangan || '';
+
+  // Ganti tombol
+  const btn = document.getElementById('btn-simpan-hp');
+  btn.textContent = '✏️ Update';
+  btn.onclick = () => updateHP(key);
+
+  document.getElementById('hp-nama').scrollIntoView({ behavior: 'smooth' });
+}
+
+function updateHP(key) {
+  const nama = document.getElementById('hp-nama').value.trim();
+  const jumlah = parseFloat(document.getElementById('hp-jumlah').value);
+  const tanggal = document.getElementById('hp-tanggal').value;
+  const keterangan = document.getElementById('hp-keterangan').value.trim();
+
+  if (!nama || !jumlah || jumlah <= 0 || !tanggal) { alert('Lengkapi semua kolom!'); return; }
+
+  const target = hpData.find(h => h._key === key);
+  set(ref(db, 'hutangpiutang/' + key), {
+    nama, jumlah, tanggal, keterangan,
+    tipe: hpTab,
+    terbayar: target.terbayar || 0
+  });
+
+  // Reset tombol
+  const btn = document.getElementById('btn-simpan-hp');
+  btn.textContent = '+ Tambah';
+  btn.onclick = tambahHP;
+  document.getElementById('hp-nama').value = '';
+  document.getElementById('hp-jumlah').value = '';
+  document.getElementById('hp-keterangan').value = '';
+}
 function bukaCicilan(key, nama, sisa) {
   cicilanTargetKey = key;
   document.getElementById('cicilan-label').textContent = `Bayar ${hpTab === 'piutang' ? 'piutang' : 'hutang'} — ${nama} (Sisa: ${formatRupiah(sisa)})`;
@@ -504,6 +648,7 @@ function renderHP() {
             <div class="budget-status">Sisa ${formatRupiah(sisa)} (${persen}% terbayar)</div>
             <div style="display:flex;gap:6px">
               ${!lunas ? `<button class="hp-lunas" onclick="bukaCicilan('${h._key}','${h.nama}',${sisa})">+ Bayar</button>` : ''}
+              <button class="hp-lunas" onclick="editHP('${h._key}')">✏️ Edit</button>
               <button class="hp-lunas" onclick="tandaiLunas('${h._key}')" style="color:#dc2626;border-color:#dc2626">🗑 Hapus</button>
             </div>
           </div>
@@ -581,7 +726,55 @@ function hapusTarget(key) {
   if (!confirm('Hapus target ini?')) return;
   remove(ref(db, 'target/' + key));
 }
+function editTarget(key) {
+  const t = targetData.find(t => t._key === key);
+  if (!t) return;
 
+  // Pindah ke tab target
+  document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(x => x.classList.remove('active'));
+  document.getElementById('tab-target').classList.add('active');
+  document.querySelectorAll('.nav-tab')[4].classList.add('active');
+
+  // Isi form
+  document.getElementById('target-nama').value = t.nama;
+  document.getElementById('target-jumlah').value = t.jumlah;
+  document.getElementById('target-emoji').value = t.emoji || '';
+  document.getElementById('target-deadline').value = t.deadline || '';
+
+  // Ganti tombol
+  const btn = document.getElementById('btn-simpan-target');
+  btn.textContent = '✏️ Update Target';
+  btn.onclick = () => updateTarget(key);
+
+  document.getElementById('target-nama').scrollIntoView({ behavior: 'smooth' });
+}
+
+function updateTarget(key) {
+  const nama = document.getElementById('target-nama').value.trim();
+  const jumlah = parseFloat(document.getElementById('target-jumlah').value);
+  const emoji = document.getElementById('target-emoji').value.trim() || '🎯';
+  const deadline = document.getElementById('target-deadline').value;
+
+  if (!nama || !jumlah || jumlah <= 0) { alert('Isi nama dan jumlah target!'); return; }
+
+  const target = targetData.find(t => t._key === key);
+  set(ref(db, 'target/' + key), {
+    nama, jumlah, emoji,
+    deadline: deadline || null,
+    terkumpul: target.terkumpul || 0,
+    createdAt: target.createdAt
+  });
+
+  // Reset tombol
+  const btn = document.getElementById('btn-simpan-target');
+  btn.textContent = '+ Tambah Target';
+  btn.onclick = tambahTarget;
+  document.getElementById('target-nama').value = '';
+  document.getElementById('target-jumlah').value = '';
+  document.getElementById('target-emoji').value = '';
+  document.getElementById('target-deadline').value = '';
+}
 function bukaDanaTarget(key, nama, sisa) {
   targetDanaKey = key;
   document.getElementById('target-dana-label').textContent = `Tambah dana untuk: ${nama} (Kurang: ${formatRupiah(sisa)})`;
@@ -674,6 +867,7 @@ function renderTarget() {
             <span style="font-size:20px;margin-right:8px">${t.emoji}</span>
             <span style="font-size:15px;font-weight:600;color:#1e293b">${t.nama} ${tercapai ? '✅' : ''}</span>
           </div>
+          <button class="budget-hapus" onclick="editTarget('${t._key}')" style="font-size:14px;color:#3b82f6">✏️</button>
           <button class="budget-hapus" onclick="hapusTarget('${t._key}')" style="font-size:14px">🗑</button>
         </div>
         ${deadlineInfo ? `<div style="margin-bottom:8px">${deadlineInfo}</div>` : ''}
@@ -711,9 +905,18 @@ window.bukaCicilan = bukaCicilan;
 window.tutupCicilan = tutupCicilan;
 window.simpanCicilan = simpanCicilan;
 window.exportExcel = exportExcel;
+window.editTransaksi = editTransaksi;
 window.render = render;
 window.tambahTarget = tambahTarget;
+window.editBudget = editBudget;
 window.hapusTarget = hapusTarget;
 window.bukaDanaTarget = bukaDanaTarget;
 window.tutupDanaTarget = tutupDanaTarget;
 window.simpanDanaTarget = simpanDanaTarget;
+window.editHP = editHP;
+window.editTarget = editTarget;
+window.updateTarget = updateTarget;
+window.editHP = editHP;
+window.updateHP = updateHP;
+window.editBudget = editBudget;
+window.editTransaksi = editTransaksi;

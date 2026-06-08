@@ -181,11 +181,29 @@
       </div>
 
       <div class="section-box">
-        <div class="section-title" style="display:flex;justify-content:space-between;align-items:center">
-          <span>Riwayat Transaksi</span>
-          <select id="filter-bulan" onchange="render()" style="font-size:12px;padding:4px 8px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;font-family:'Inter',sans-serif">
-            <option value="">Semua Bulan</option>
-          </select>
+        <div class="section-title">Riwayat Transaksi</div>
+        <div class="filter-wrap">
+          <div class="filter-type-toggle">
+            <button class="filter-type-btn active" onclick="setFilterType('semua', this)">Semua</button>
+            <button class="filter-type-btn" onclick="setFilterType('bulan', this)">Per Bulan</button>
+            <button class="filter-type-btn" onclick="setFilterType('rentang', this)">Rentang</button>
+            <button class="filter-type-btn" onclick="setFilterType('tanggal', this)">Tanggal</button>
+          </div>
+          <div id="filter-bulan-wrap" style="display:none;margin-top:8px">
+            <select id="filter-bulan" onchange="render()" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;font-family:'Inter',sans-serif;font-size:13px">
+              <option value="">Pilih Bulan</option>
+            </select>
+          </div>
+          <div id="filter-rentang-wrap" style="display:none;margin-top:8px;display:none">
+            <div style="display:flex;gap:8px;align-items:center">
+              <input type="date" id="filter-dari" onchange="render()" style="flex:1;padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;font-family:'Inter',sans-serif;font-size:13px" />
+              <span style="font-size:13px;color:#94a3b8">s/d</span>
+              <input type="date" id="filter-sampai" onchange="render()" style="flex:1;padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;font-family:'Inter',sans-serif;font-size:13px" />
+            </div>
+          </div>
+          <div id="filter-tanggal-wrap" style="display:none;margin-top:8px">
+            <input type="date" id="filter-tanggal-val" onchange="render()" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;font-family:'Inter',sans-serif;font-size:13px" />
+          </div>
         </div>
         <ul id="list-transaksi" class="tx-list"></ul>
       </div>

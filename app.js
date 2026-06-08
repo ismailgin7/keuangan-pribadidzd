@@ -180,6 +180,21 @@ function render() {
   document.getElementById('total-keluar').textContent = formatRupiah(totalKeluar);
   document.getElementById('saldo').textContent = formatRupiah(Math.abs(saldo));
   document.getElementById('saldo').style.color = saldo < 0 ? '#dc2626' : '#1e293b';
+  // Cashflow bersih & saving rate
+  const cashflow = totalMasuk - totalKeluar;
+  const savingRate = totalMasuk > 0 ? ((cashflow / totalMasuk) * 100).toFixed(1) : 0;
+
+  const elCashflow = document.getElementById('cashflow-bersih');
+  if (elCashflow) {
+    elCashflow.textContent = formatRupiah(Math.abs(cashflow));
+    elCashflow.style.color = cashflow < 0 ? '#dc2626' : '#16a34a';
+  }
+
+  const elSaving = document.getElementById('saving-rate');
+  if (elSaving) {
+    elSaving.textContent = savingRate + '%';
+    elSaving.style.color = savingRate < 0 ? '#dc2626' : savingRate < 20 ? '#f59e0b' : '#16a34a';
+  }
 
   // Saldo per rekening - hanya tampil yang ada transaksinya
   metodeList.forEach(m => {

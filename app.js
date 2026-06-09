@@ -263,6 +263,7 @@ function render() {
     const tgl = document.getElementById('filter-tanggal-val')?.value;
     if (tgl) filtered = transaksi.filter(t => t.tanggal === tgl);
   }
+  const bulanIni = new Date().toISOString().slice(0, 7);
   const filteredBulanIni = transaksi.filter(t => t.tanggal.slice(0, 7) === bulanIni);
 
   // Kartu dashboard - pemasukan & pengeluaran bulan ini

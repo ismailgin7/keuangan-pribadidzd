@@ -263,6 +263,15 @@ function render() {
     const tgl = document.getElementById('filter-tanggal-val')?.value;
     if (tgl) filtered = transaksi.filter(t => t.tanggal === tgl);
   }
+  // Filter pencarian
+  const cari = document.getElementById('filter-cari')?.value.toLowerCase().trim();
+  if (cari) {
+    filtered = filtered.filter(t =>
+      t.keterangan.toLowerCase().includes(cari) ||
+      t.kategori.toLowerCase().includes(cari) ||
+      t.metode.toLowerCase().includes(cari)
+    );
+  }
   const bulanIni = new Date().toISOString().slice(0, 7);
   const filteredBulanIni = transaksi.filter(t => t.tanggal.slice(0, 7) === bulanIni);
 

@@ -44,8 +44,18 @@ onValue(transaksiRef, (snapshot) => {
 onValue(budgetRef, (snapshot) => {
   budget = snapshot.val() || {};
   renderBudget();
+  renderInsight();
 });
 
+onValue(transaksiRef, (snapshot) => {
+  transaksi = [];
+  snapshot.forEach((child) => {
+    transaksi.unshift({ _key: child.key, ...child.val() });
+  });
+  render();
+  renderBudget();
+  renderInsight(); // ← tambahkan ini
+});
 onValue(hpRef, (snapshot) => {
   hpData = [];
   snapshot.forEach((child) => {
@@ -934,6 +944,122 @@ function renderTarget() {
       </div>
     `;
   }).join('');
+}
+// ======= INSIGHT OTOMATIS =======
+function renderInsight() {
+  const container = document.getElementById('insight-list');
+  if (!container) return;
+
+  const now = new Date();
+  const bulanIni = now.toISOString().slice(0, 7);
+  const bulanLalu = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().slice(0, 7);
+
+  const txBulanIni = transaksi.filter(t => t.tanggal.slice(0, 7) === bulanIni);
+  const txBulanLalu = transaksi.filter(t => t.tanggal.slice(0, 7) === bulanLalu);
+
+  const insights = [];
+
+  // 1. Perbandingan total pengeluaran bulan ini vs bulan lalu
+  const keluarIni = txBulanIni.filter(t => t.tipe === 'keluar' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
+  const keluarLalu = txBulanLalu.filter(t => t.tipe === 'keluar' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
+  if (keluarLalu > 0) {
+    const diff = ((keluarIni - keluarLalu) / keluarLalu * 100).toFixed(0);
+    if (diff > 0) {
+      insights.push({ icon: '⚠️', warna: '#f59e0b', teks: `Pengeluaran bulan ini meningkat <strong>${diff}%</strong> dibanding bulan lalu (${formatRupiah(keluarIni)} vs ${formatRupiah(keluarLalu)}).` });
+    } else if (diff < 0) {
+      insights.push({ icon: '✅', warna: '#16a34a', teks: `Pengeluaran bulan ini turun <strong>${Math.abs(diff)}%</strong> dibanding bulan lalu. Bagus!` });
+    }
+  }
+
+  // 2. Perbandingan saving rate bulan ini vs bulan lalu
+  const masukIni = txBulanIni.filter(t => t.tipe === 'masuk' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
+  const masukLalu = txBulanLalu.filter(t => t.tipe === 'masuk' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
+  const savingIni = masukIni > 0 ? ((masukIni - keluarIni) / masukIni * 100).toFixed(1) : 0;
+  const savingLalu = masukLalu > 0 ? ((masukLalu - keluarLalu) / masukLalu * 100).toFixed(1) : 0;
+  if (savingLalu > 0 && savingIni > 0) {
+    const diffSaving = (savingIni - savingLalu).toFixed(1);
+    if (diffSaving > 0) {
+      insights.push({ icon: '🎉', warna: '#16a34a', teks: `Bulan ini kamu berhasil menabung <strong>${diffSaving}%</strong> lebih banyak dari bulan lalu (saving rate ${savingIni}%).` });
+    } else if (diffSaving < 0) {
+      insights.push({ icon: '📉', warna: '#dc2626', teks: `Saving rate bulan ini turun <strong>${Math.abs(diffSaving)}%</strong> dibanding bulan lalu (${savingIni}% vs ${savingLalu}%).` });
+    }
+  }
+
+  // 3. Kategori pengeluaran terbesar bulan ini
+  const kategoriMap = {};
+  txBulanIni.filter(t => t.tipe === 'keluar' && t.kategori !== 'Transfer').forEach(t => {
+    kategoriMap[t.kategori] = (kategoriMap[t.kategori] || 0) + t.jumlah;
+  });
+  const kategoriTerbesar = Object.entries(kategoriMap).sort((a,b) => b[1]-a[1])[0];
+  if (kategoriTerbesar) {
+    const persen = keluarIni > 0 ? ((kategoriTerbesar[1] / keluarIni) * 100).toFixed(0) : 0;
+    insights.push({ icon: '📊', warna: '#6366f1', teks: `Pengeluaran terbesar bulan ini: <strong>${kategoriTerbesar[0]}</strong> sebesar ${formatRupiah(kategoriTerbesar[1])} (${persen}% dari total pengeluaran).` });
+  }
+
+  // 4. Perbandingan per kategori bulan ini vs bulan lalu
+  const kategoriIni = {};
+  const kategoriLaluMap = {};
+  txBulanIni.filter(t => t.tipe === 'keluar' && t.kategori !== 'Transfer').forEach(t => { kategoriIni[t.kategori] = (kategoriIni[t.kategori] || 0) + t.jumlah; });
+  txBulanLalu.filter(t => t.tipe === 'keluar' && t.kategori !== 'Transfer').forEach(t => { kategoriLaluMap[t.kategori] = (kategoriLaluMap[t.kategori] || 0) + t.jumlah; });
+
+  Object.keys(kategoriIni).forEach(kat => {
+    if (kategoriLaluMap[kat] && kategoriLaluMap[kat] > 0) {
+      const naik = ((kategoriIni[kat] - kategoriLaluMap[kat]) / kategoriLaluMap[kat] * 100).toFixed(0);
+      if (naik >= 25) {
+        insights.push({ icon: '🔺', warna: '#ef4444', teks: `Pengeluaran <strong>${kat}</strong> meningkat <strong>${naik}%</strong> dibanding bulan lalu (${formatRupiah(kategoriIni[kat])} vs ${formatRupiah(kategoriLaluMap[kat])}).` });
+      }
+    }
+  });
+
+  // 5. Anggaran yang hampir habis
+  const bulanIniBudget = new Date().toISOString().slice(0, 7);
+  Object.keys(budget).forEach(kat => {
+    const batas = budget[kat];
+    const terpakai = transaksi
+      .filter(t => t.tipe === 'keluar' && t.kategori === kat && t.tanggal.slice(0, 7) === bulanIniBudget)
+      .reduce((s,t) => s+t.jumlah, 0);
+    const persen = batas > 0 ? ((terpakai / batas) * 100).toFixed(0) : 0;
+    if (persen >= 80 && persen < 100) {
+      insights.push({ icon: '⚡', warna: '#f59e0b', teks: `Anggaran <strong>${kat}</strong> sudah terpakai <strong>${persen}%</strong> (${formatRupiah(terpakai)} dari ${formatRupiah(batas)}).` });
+    } else if (persen >= 100) {
+      insights.push({ icon: '🚨', warna: '#dc2626', teks: `Anggaran <strong>${kat}</strong> sudah <strong>melebihi batas!</strong> Terpakai ${formatRupiah(terpakai)} dari ${formatRupiah(batas)}.` });
+    }
+  });
+
+  // 6. Target yang mendekati deadline
+  targetData.forEach(t => {
+    if (!t.deadline) return;
+    const hari = Math.ceil((new Date(t.deadline) - new Date()) / (1000 * 60 * 60 * 24));
+    const persen = t.jumlah > 0 ? ((t.terkumpul || 0) / t.jumlah * 100).toFixed(0) : 0;
+    if (hari > 0 && hari <= 30 && persen < 100) {
+      insights.push({ icon: '⏰', warna: '#6366f1', teks: `Target <strong>${t.emoji} ${t.nama}</strong> deadline <strong>${hari} hari lagi</strong>, baru tercapai ${persen}%.` });
+    } else if (hari < 0 && persen < 100) {
+      insights.push({ icon: '❗', warna: '#dc2626', teks: `Target <strong>${t.emoji} ${t.nama}</strong> sudah melewati deadline dan baru tercapai ${persen}%.` });
+    }
+  });
+
+  // 7. Hutang piutang yang besar
+  const totalHutang = hpData.filter(h => h.tipe === 'hutang').reduce((s,h) => s + (h.jumlah - (h.terbayar||0)), 0);
+  const totalPiutang = hpData.filter(h => h.tipe === 'piutang').reduce((s,h) => s + (h.jumlah - (h.terbayar||0)), 0);
+  if (totalHutang > 0) {
+    insights.push({ icon: '💸', warna: '#ef4444', teks: `Kamu masih punya hutang sebesar <strong>${formatRupiah(totalHutang)}</strong> yang belum lunas.` });
+  }
+  if (totalPiutang > 0) {
+    insights.push({ icon: '💰', warna: '#16a34a', teks: `Ada piutang sebesar <strong>${formatRupiah(totalPiutang)}</strong> yang belum dibayar orang lain ke kamu.` });
+  }
+
+  // Tampilkan
+  if (insights.length === 0) {
+    container.innerHTML = '<p style="font-size:13px;color:#94a3b8;text-align:center;padding:12px">Belum ada insight. Tambahkan lebih banyak transaksi!</p>';
+    return;
+  }
+
+  container.innerHTML = insights.map(i => `
+    <div style="display:flex;gap:10px;align-items:flex-start;padding:10px 12px;background:#f8fafc;border-radius:10px;margin-bottom:8px;border-left:3px solid ${i.warna}">
+      <span style="font-size:18px;flex-shrink:0">${i.icon}</span>
+      <p style="font-size:13px;color:#1e293b;line-height:1.5">${i.teks}</p>
+    </div>
+  `).join('');
 }
 window.gotoTab = gotoTab;
 window.setType = setType;

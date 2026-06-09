@@ -1091,3 +1091,4 @@ window.editHP = editHP;
 window.updateHP = updateHP;
 window.editBudget = editBudget;
 window.editTransaksi = editTransaksi;
+window.renderInsight = renderInsight;

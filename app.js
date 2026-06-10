@@ -22,6 +22,8 @@ let tipeAktif = 'masuk';
 let grafikInstance = null;
 let grafikSaldoInstance = null;
 let grafikSaldoHarianInstance = null;
+let grafikPengeluaranHarianInstance = null;
+let grafikDonutInstance = null;
 let budget = {};
 let hpData = [];
 let hpTab = 'piutang';
@@ -56,7 +58,10 @@ onValue(transaksiRef, (snapshot) => {
   render();
   renderBudget();
   renderInsight();
-  renderGrafikSaldoHarian(); // ← tambahkan ini
+  renderGrafikSaldoHarian();
+  renderGrafikPengeluaranHarian(); // ← tambahkan
+  renderGrafikDonut();              // ← tambahkan
+  renderRekeningList();             // ← tambahkan
 });
 onValue(hpRef, (snapshot) => {
   hpData = [];
@@ -1186,6 +1191,184 @@ function renderGrafikSaldoHarian() {
       }
     }
   });
+}
+// ======= GRAFIK PENGELUARAN HARIAN =======
+function renderGrafikPengeluaranHarian() {
+  const ctx = document.getElementById('grafikPengeluaranHarian');
+  if (!ctx) return;
+
+  const hari30 = [];
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    hari30.push(d.toISOString().slice(0, 10));
+  }
+
+  const dataPerHari = hari30.map(tgl =>
+    transaksi.filter(t => t.tanggal === tgl && t.tipe === 'keluar' && t.kategori !== 'Transfer')
+      .reduce((s,t) => s+t.jumlah, 0)
+  );
+
+  const labels = hari30.map(tgl => {
+    const d = new Date(tgl);
+    return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+  });
+
+  if (grafikPengeluaranHarianInstance) grafikPengeluaranHarianInstance.destroy();
+
+  grafikPengeluaranHarianInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        data: dataPerHari,
+        borderColor: '#6366f1',
+        backgroundColor: 'rgba(99,102,241,0.08)',
+        borderWidth: 2,
+        pointRadius: 3,
+        pointBackgroundColor: '#6366f1',
+        pointHoverRadius: 5,
+        fill: true,
+        tension: 0.4
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: c => ' ' + formatRupiah(c.raw) } }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 10 }, maxTicksLimit: 8 } },
+        y: { grid: { color: '#f8fafc' }, ticks: {
+          font: { size: 10 },
+          callback: v => v >= 1000000 ? (v/1000000).toFixed(1)+'jt' : v >= 1000 ? (v/1000).toFixed(0)+'rb' : v
+        }}
+      }
+    }
+  });
+}
+
+// ======= GRAFIK DONUT =======
+function renderGrafikDonut() {
+  const ctx = document.getElementById('grafikDonut');
+  const legend = document.getElementById('donut-legend');
+  if (!ctx) return;
+
+  const bulanIni = new Date().toISOString().slice(0, 7);
+  const txBulanIni = transaksi.filter(t => t.tipe === 'keluar' && t.kategori !== 'Transfer' && t.tanggal.slice(0,7) === bulanIni);
+  const total = txBulanIni.reduce((s,t) => s+t.jumlah, 0);
+
+  const kategoriMap = {};
+  txBulanIni.forEach(t => { kategoriMap[t.kategori] = (kategoriMap[t.kategori]||0) + t.jumlah; });
+  const sorted = Object.entries(kategoriMap).sort((a,b) => b[1]-a[1]);
+
+  if (sorted.length === 0) return;
+
+  // Kelompokkan kategori kecil jadi "Lainnya"
+  const top5 = sorted.slice(0, 5);
+  const lainnya = sorted.slice(5).reduce((s,x) => s+x[1], 0);
+  if (lainnya > 0) top5.push(['Lainnya', lainnya]);
+
+  const warna = ['#10b981','#6366f1','#f59e0b','#ec4899','#3b82f6','#94a3b8'];
+
+  if (grafikDonutInstance) grafikDonutInstance.destroy();
+
+  grafikDonutInstance = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: top5.map(x=>x[0]),
+      datasets: [{
+        data: top5.map(x=>x[1]),
+        backgroundColor: warna,
+        borderWidth: 2,
+        borderColor: 'white'
+      }]
+    },
+    options: {
+      responsive: true,
+      cutout: '65%',
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: c => ` ${c.label}: ${formatRupiah(c.raw)}` } }
+      }
+    },
+    plugins: [{
+      id: 'centerText',
+      beforeDraw(chart) {
+        const { width, height, ctx } = chart;
+        ctx.save();
+        ctx.font = `bold ${Math.min(width,height)*0.1}px Inter`;
+        ctx.fillStyle = '#1e293b';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('Total', width/2, height/2 - 10);
+        ctx.font = `bold ${Math.min(width,height)*0.09}px Inter`;
+        ctx.fillStyle = '#6366f1';
+        const totalStr = total >= 1000000 ? 'Rp '+(total/1000000).toFixed(1)+'jt' : formatRupiah(total);
+        ctx.fillText(totalStr, width/2, height/2 + 12);
+        ctx.restore();
+      }
+    }]
+  });
+
+  // Legend
+  if (legend) {
+    legend.innerHTML = top5.map((x,i) => {
+      const persen = total > 0 ? ((x[1]/total)*100).toFixed(0) : 0;
+      return `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div style="display:flex;align-items:center;gap:6px">
+            <div style="width:10px;height:10px;border-radius:50%;background:${warna[i]};flex-shrink:0"></div>
+            <span style="color:#475569">${x[0]}</span>
+          </div>
+          <div style="text-align:right">
+            <span style="font-weight:600;color:#1e293b">${persen}%</span>
+            <div style="color:#94a3b8;font-size:11px">${formatRupiah(x[1])}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+}
+
+// ======= REKENING LIST =======
+function renderRekeningList() {
+  const container = document.getElementById('rekening-list');
+  const elTotal = document.getElementById('total-saldo-rekening');
+  if (!container) return;
+
+  let totalSaldo = 0;
+  const rekeningAktif = [];
+
+  metodeList.forEach(m => {
+    const masuk = transaksi.filter(t => t.tipe === 'masuk' && t.metode === m).reduce((s,t) => s+t.jumlah, 0);
+    const keluar = transaksi.filter(t => t.tipe === 'keluar' && t.metode === m).reduce((s,t) => s+t.jumlah, 0);
+    const saldo = masuk - keluar;
+    if (masuk > 0 || keluar > 0) {
+      rekeningAktif.push({ nama: m, saldo });
+      totalSaldo += saldo;
+    }
+  });
+
+  if (elTotal) elTotal.textContent = formatRupiah(totalSaldo);
+
+  if (rekeningAktif.length === 0) {
+    container.innerHTML = '<p style="font-size:13px;color:#94a3b8;text-align:center;padding:12px">Belum ada rekening.</p>';
+    return;
+  }
+
+  const ikonRekening = { Cash: '💵', BNI: '🏦', BSI: '🏦', DANA: '💙', OVO: '💜', SeaBank: '🌊', GoPay: '💚' };
+
+  container.innerHTML = rekeningAktif.map(r => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f8fafc">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:36px;height:36px;border-radius:10px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;font-size:18px">${ikonRekening[r.nama]||'🏦'}</div>
+        <span style="font-size:13px;font-weight:500;color:#1e293b">${r.nama}</span>
+      </div>
+      <span style="font-size:13px;font-weight:600;color:${r.saldo < 0 ? '#dc2626' : '#1e293b'}">${formatRupiah(r.saldo)}</span>
+    </div>
+  `).join('');
 }
 window.gotoTab = gotoTab;
 window.setType = setType;

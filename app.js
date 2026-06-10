@@ -21,6 +21,7 @@ let transaksi = [];
 let tipeAktif = 'masuk';
 let grafikInstance = null;
 let grafikSaldoInstance = null;
+let grafikSaldoHarianInstance = null;
 let budget = {};
 let hpData = [];
 let hpTab = 'piutang';
@@ -54,7 +55,8 @@ onValue(transaksiRef, (snapshot) => {
   });
   render();
   renderBudget();
-  renderInsight(); // ← tambahkan ini
+  renderInsight();
+  renderGrafikSaldoHarian(); // ← tambahkan ini
 });
 onValue(hpRef, (snapshot) => {
   hpData = [];
@@ -1061,6 +1063,102 @@ function renderInsight() {
     </div>
   `).join('');
 }
+// ======= GRAFIK SALDO HARIAN =======
+function renderGrafikSaldoHarian() {
+  const ctx = document.getElementById('grafikSaldoHarian');
+  if (!ctx) return;
+
+  // Ambil 30 hari terakhir
+  const hari30 = [];
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    hari30.push(d.toISOString().slice(0, 10));
+  }
+
+  // Hitung saldo kumulatif per hari
+  let saldoKumulatif = 0;
+  const allSorted = [...transaksi].sort((a, b) => a.tanggal.localeCompare(b.tanggal));
+
+  // Hitung saldo sebelum 30 hari lalu
+  const batas = hari30[0];
+  allSorted.filter(t => t.tanggal < batas && t.kategori !== 'Transfer').forEach(t => {
+    saldoKumulatif += t.tipe === 'masuk' ? t.jumlah : -t.jumlah;
+  });
+
+  // Hitung saldo per hari dalam 30 hari
+  const saldoPerHari = hari30.map(tgl => {
+    allSorted.filter(t => t.tanggal === tgl && t.kategori !== 'Transfer').forEach(t => {
+      saldoKumulatif += t.tipe === 'masuk' ? t.jumlah : -t.jumlah;
+    });
+    return saldoKumulatif;
+  });
+
+  // Hitung perbandingan saldo bulan ini vs bulan lalu
+  const bulanIni = new Date().toISOString().slice(0, 7);
+  const bulanLalu = new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1).toISOString().slice(0, 7);
+
+  const masukIni = transaksi.filter(t => t.tipe === 'masuk' && t.tanggal.slice(0,7) === bulanIni && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
+  const keluarIni = transaksi.filter(t => t.tipe === 'keluar' && t.tanggal.slice(0,7) === bulanIni && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
+  const masukLalu = transaksi.filter(t => t.tipe === 'masuk' && t.tanggal.slice(0,7) === bulanLalu && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
+  const keluarLalu = transaksi.filter(t => t.tipe === 'keluar' && t.tanggal.slice(0,7) === bulanLalu && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
+  const cashflowIni = masukIni - keluarIni;
+  const cashflowLalu = masukLalu - keluarLalu;
+  const diffNominal = cashflowIni - cashflowLalu;
+  const diffPersen = cashflowLalu !== 0 ? ((diffNominal / Math.abs(cashflowLalu)) * 100).toFixed(1) : 0;
+
+  // Update hero perbandingan
+  const elDiff = document.getElementById('saldo-diff');
+  const elPersen = document.getElementById('saldo-diff-persen');
+  const elIcon = document.getElementById('saldo-diff-icon');
+  if (elDiff && elPersen && elIcon) {
+    const naik = diffNominal >= 0;
+    elDiff.textContent = (naik ? '+ ' : '- ') + formatRupiah(Math.abs(diffNominal));
+    elDiff.style.color = naik ? '#16a34a' : '#dc2626';
+    elIcon.textContent = naik ? '↑' : '↓';
+    elIcon.style.color = naik ? '#16a34a' : '#dc2626';
+    elPersen.textContent = (naik ? '+' : '') + diffPersen + '%';
+    elPersen.className = 'hero-badge' + (naik ? '' : ' turun');
+  }
+
+  // Render grafik
+  if (grafikSaldoHarianInstance) grafikSaldoHarianInstance.destroy();
+
+  const labels = hari30.map(tgl => {
+    const d = new Date(tgl);
+    return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+  });
+
+  grafikSaldoHarianInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        data: saldoPerHari,
+        borderColor: '#10b981',
+        backgroundColor: 'rgba(16,185,129,0.08)',
+        borderWidth: 2,
+        pointRadius: 0,
+        pointHoverRadius: 4,
+        fill: true,
+        tension: 0.4
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false }, tooltip: {
+        callbacks: { label: c => ' ' + formatRupiah(c.raw) }
+      }},
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 10 }, maxTicksLimit: 6 } },
+        y: { grid: { color: '#f1f5f9' }, ticks: {
+          font: { size: 10 },
+          callback: v => v >= 1000000 ? (v/1000000).toFixed(1) + ' jt' : v >= 1000 ? (v/1000).toFixed(0) + ' rb' : v
+        }}
+      }
+    }
+  });
+}
 window.gotoTab = gotoTab;
 window.setType = setType;
 window.tambahTransaksi = tambahTransaksi;
@@ -1092,3 +1190,4 @@ window.updateHP = updateHP;
 window.editBudget = editBudget;
 window.editTransaksi = editTransaksi;
 window.renderInsight = renderInsight;
+window.renderGrafikSaldoHarian = renderGrafikSaldoHarian;

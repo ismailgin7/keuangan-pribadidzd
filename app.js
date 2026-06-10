@@ -244,9 +244,7 @@ function lakukanTransfer() {
 
 // ======= RENDER UTAMA =======
 function render() {
-  const now = new Date();
-  const bulanIni = now.toISOString().slice(0, 7);
-    // Update dropdown bulan
+      // Update dropdown bulan
   const semuaBulan = [...new Set(transaksi.map(t => t.tanggal.slice(0, 7)))].sort().reverse();
   const filterEl = document.getElementById('filter-bulan');
   const dipilih = filterEl ? filterEl.value : '';
@@ -286,7 +284,8 @@ function render() {
       t.metode.toLowerCase().includes(cari)
     );
   }
-  const bulanIni = new Date().toISOString().slice(0, 7);
+  const now = new Date();
+  const bulanIni = now.toISOString().slice(0, 7);
   const filteredBulanIni = transaksi.filter(t => t.tanggal.slice(0, 7) === bulanIni);
 
   // Kartu dashboard - pemasukan & pengeluaran bulan ini

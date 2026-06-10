@@ -66,46 +66,34 @@
       </div>
     </div>
 
-    <div class="cards-grid" style="grid-template-columns: repeat(5,1fr)">
-      <div class="card">
-        <p>Saldo Cash</p>
-        <h2 id="saldo-Cash">Rp 0</h2>
+    <!-- BARIS 2 - 3 KARTU -->
+    <div class="tiga-kartu">
+      <div class="kartu-stat">
+        <div class="kartu-stat-icon" style="background:#dcfce7">⬆</div>
+        <div class="kartu-stat-body">
+          <div class="kartu-stat-label">PEMASUKAN BULAN INI</div>
+          <div class="kartu-stat-nilai income" id="total-masuk">Rp 0</div>
+          <div class="kartu-stat-sub">Dari berbagai sumber</div>
+          <div class="kartu-stat-avg">Rata-rata harian <strong id="avg-masuk">Rp 0</strong></div>
+        </div>
       </div>
-      <div class="card">
-        <p>Saldo BNI</p>
-        <h2 id="saldo-BNI">Rp 0</h2>
+      <div class="kartu-stat">
+        <div class="kartu-stat-icon" style="background:#fee2e2">⬇</div>
+        <div class="kartu-stat-body">
+          <div class="kartu-stat-label">PENGELUARAN BULAN INI</div>
+          <div class="kartu-stat-nilai expense" id="total-keluar">Rp 0</div>
+          <div class="kartu-stat-sub" id="jml-transaksi-keluar">Total 0 transaksi</div>
+          <div class="kartu-stat-avg">Rata-rata harian <strong id="avg-keluar">Rp 0</strong></div>
+        </div>
       </div>
-      <div class="card">
-        <p>Saldo BSI</p>
-        <h2 id="saldo-BSI">Rp 0</h2>
-      </div>
-      <div class="card">
-        <p>Saldo DANA</p>
-        <h2 id="saldo-DANA">Rp 0</h2>
-      </div>
-      <div class="card">
-        <p>Saldo OVO</p>
-        <h2 id="saldo-OVO">Rp 0</h2>
-      </div>
-      <div class="card">
-        <p>Saldo SeaBank</p>
-        <h2 id="saldo-SeaBank">Rp 0</h2>
-      </div>
-      <div class="card">
-        <p>Saldo GoPay</p>
-        <h2 id="saldo-GoPay">Rp 0</h2>
-      </div>
-      <div class="card income">
-        <p>Total Piutang</p>
-        <h2 id="total-piutang">Rp 0</h2>
-      </div>
-      <div class="card expense">
-        <p>Total Hutang</p>
-        <h2 id="total-hutang">Rp 0</h2>
-      </div>
-      <div class="card expense">
-        <p>Total Anggaran</p>
-        <h2 id="total-anggaran">Rp 0</h2>
+      <div class="kartu-stat">
+        <div class="kartu-stat-icon" style="background:#ede9fe">💹</div>
+        <div class="kartu-stat-body">
+          <div class="kartu-stat-label">SAVING RATE</div>
+          <div class="kartu-stat-nilai" id="saving-rate" style="color:#6366f1">0%</div>
+          <div id="saving-rate-label" class="kartu-stat-badge">-</div>
+          <div class="kartu-stat-avg">Target: >20% <span id="saving-rate-status" style="color:#16a34a;font-weight:600"></span></div>
+        </div>
       </div>
     </div>
 <div class="section-box" style="margin-bottom:12px">

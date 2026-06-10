@@ -244,6 +244,8 @@ function lakukanTransfer() {
 
 // ======= RENDER UTAMA =======
 function render() {
+  const now = new Date();
+  const bulanIni = now.toISOString().slice(0, 7);
     // Update dropdown bulan
   const semuaBulan = [...new Set(transaksi.map(t => t.tanggal.slice(0, 7)))].sort().reverse();
   const filterEl = document.getElementById('filter-bulan');
@@ -300,6 +302,20 @@ function render() {
   document.getElementById('total-keluar').textContent = formatRupiah(totalKeluar);
   document.getElementById('saldo').textContent = formatRupiah(Math.abs(saldo));
   document.getElementById('saldo').style.color = saldo < 0 ? '#dc2626' : '#1e293b';
+
+  // Rata-rata harian
+  const hariDalamBulan = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const avgMasuk = totalMasuk > 0 ? totalMasuk / now.getDate() : 0;
+  const avgKeluar = totalKeluar > 0 ? totalKeluar / now.getDate() : 0;
+  const elAvgMasuk = document.getElementById('avg-masuk');
+  const elAvgKeluar = document.getElementById('avg-keluar');
+  if (elAvgMasuk) elAvgMasuk.textContent = formatRupiah(avgMasuk);
+  if (elAvgKeluar) elAvgKeluar.textContent = formatRupiah(avgKeluar);
+
+  // Jumlah transaksi keluar
+  const jmlKeluar = filteredBulanIni.filter(t => t.tipe === 'keluar' && t.kategori !== 'Transfer').length;
+  const elJmlKeluar = document.getElementById('jml-transaksi-keluar');
+  if (elJmlKeluar) elJmlKeluar.textContent = `Total ${jmlKeluar} transaksi`;
   // Cashflow bersih & saving rate
   const cashflow = totalMasuk - totalKeluar;
   const savingRate = totalMasuk > 0 ? ((cashflow / totalMasuk) * 100).toFixed(1) : 0;
@@ -313,7 +329,20 @@ function render() {
   const elSaving = document.getElementById('saving-rate');
   if (elSaving) {
     elSaving.textContent = savingRate + '%';
-    elSaving.style.color = savingRate < 0 ? '#dc2626' : savingRate < 20 ? '#f59e0b' : '#16a34a';
+    elSaving.style.color = savingRate < 0 ? '#dc2626' : savingRate < 20 ? '#f59e0b' : '#6366f1';
+  }
+
+  const elSavingLabel = document.getElementById('saving-rate-label');
+  const elSavingStatus = document.getElementById('saving-rate-status');
+  if (elSavingLabel) {
+    if (savingRate >= 50) { elSavingLabel.textContent = 'Sangat Baik ⭐'; elSavingLabel.className = 'kartu-stat-badge'; }
+    else if (savingRate >= 20) { elSavingLabel.textContent = 'Baik 👍'; elSavingLabel.className = 'kartu-stat-badge'; }
+    else if (savingRate >= 0) { elSavingLabel.textContent = 'Perlu Ditingkatkan'; elSavingLabel.className = 'kartu-stat-badge sedang'; }
+    else { elSavingLabel.textContent = 'Defisit ⚠️'; elSavingLabel.className = 'kartu-stat-badge kurang'; }
+  }
+  if (elSavingStatus) {
+    elSavingStatus.textContent = savingRate >= 20 ? 'Tercapai ✓' : 'Belum Tercapai';
+    elSavingStatus.style.color = savingRate >= 20 ? '#16a34a' : '#dc2626';
   }
 
   // Saldo per rekening - hanya tampil yang ada transaksinya

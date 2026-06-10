@@ -27,11 +27,23 @@
   <!-- TAB RINGKASAN -->
   <div id="tab-ringkasan" class="tab-content active">
     <div class="cards-grid">
-      <div class="card">
-        <p>Saldo Total</p>
-        <h2 id="saldo">Rp 0</h2>
-        <span class="card-sub">Bank + Cash</span>
+      <!-- HERO SALDO -->
+    <div class="hero-saldo">
+      <div class="hero-kiri">
+        <div class="hero-label">SALDO TOTAL</div>
+        <div class="hero-nilai" id="saldo">Rp 0</div>
+        <div class="hero-perbandingan">
+          <span id="saldo-diff-icon">↑</span>
+          <span id="saldo-diff">+ Rp 0</span> dibanding bulan lalu
+          <span id="saldo-diff-persen" class="hero-badge">0%</span>
+        </div>
+        <div class="hero-sub">Semua rekening digabungkan</div>
       </div>
+      <div class="hero-kanan">
+        <div class="hero-grafik-label">PERKEMBANGAN SALDO (30 HARI)</div>
+        <canvas id="grafikSaldoHarian" height="120"></canvas>
+      </div>
+    </div>
       <div class="card income">
         <p>Pemasukan bulan ini</p>
         <h2 id="total-masuk">Rp 0</h2>

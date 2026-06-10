@@ -24,7 +24,6 @@
   </div>
 
   <!-- TAB RINGKASAN -->
-  <!-- TAB RINGKASAN -->
   <div id="tab-ringkasan" class="tab-content active">
 
     <!-- BARIS 1 - HERO SALDO -->
@@ -130,6 +129,23 @@
     </div>
 
   </div>
+
+  <!-- TAB TRANSAKSI -->
+  <div id="tab-transaksi" class="tab-content">
+    <div class="two-col">
+      <div class="section-box">
+        <div class="section-title">Tambah Transaksi</div>
+        <div class="type-toggle">
+          <button id="btn-masuk" class="active-income" onclick="setType('masuk')">⬆ Pemasukan</button>
+          <button id="btn-keluar" onclick="setType('keluar')">⬇ Pengeluaran</button>
+          <button id="btn-transfer" onclick="setType('transfer')">↔ Transfer</button>
+        </div>
+        <div id="form-utama">
+          <div class="form-grid">
+            <input type="text" id="keterangan" placeholder="Keterangan" />
+            <input type="number" id="jumlah" placeholder="Jumlah (Rp)" min="0" />
+            <select id="kategori">
+              <option value="Gaji">Gaji</option>
               <option value="Usaha">Usaha</option>
               <option value="Investasi">Investasi</option>
               <option value="Piutang">Piutang</option>

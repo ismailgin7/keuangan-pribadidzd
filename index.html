@@ -12,16 +12,15 @@
 
   <div class="topbar">
     <span class="logo">💰 Keuangan Saya</span>
+    <div class="nav-tabs">
+      <button class="nav-tab active" onclick="gotoTab('ringkasan', this)">Ringkasan</button>
+      <button class="nav-tab" onclick="gotoTab('transaksi', this)">Transaksi</button>
+      <button class="nav-tab" onclick="gotoTab('anggaran', this)">Anggaran</button>
+      <button class="nav-tab" onclick="gotoTab('hutang', this)">Hutang & Piutang</button>
+      <button class="nav-tab" onclick="gotoTab('grafik', this)">Grafik</button>
+      <button class="nav-tab" onclick="gotoTab('target', this)">🎯 Target</button>
+    </div>
     <button class="btn-export" onclick="exportExcel()">⬇ Export Excel</button>
-  </div>
-
-  <div class="nav-tabs">
-    <button class="nav-tab active" onclick="gotoTab('ringkasan', this)">Ringkasan</button>
-    <button class="nav-tab" onclick="gotoTab('transaksi', this)">Transaksi</button>
-    <button class="nav-tab" onclick="gotoTab('anggaran', this)">Anggaran</button>
-    <button class="nav-tab" onclick="gotoTab('hutang', this)">Hutang & Piutang</button>
-    <button class="nav-tab" onclick="gotoTab('grafik', this)">Grafik</button>
-    <button class="nav-tab" onclick="gotoTab('target', this)">🎯 Target</button>
   </div>
 
   <!-- TAB RINGKASAN -->
@@ -56,16 +55,14 @@
         <p>Sisa Anggaran</p>
         <h2 id="sisa-anggaran">Rp 0</h2>
       </div>
-      <div class="card">
-        <p>Cashflow Bersih</p>
-        <h2 id="cashflow-bersih">Rp 0</h2>
-      </div>
+      
       <div class="card">
         <p>Saving Rate</p>
         <h2 id="saving-rate">0%</h2>
       </div>
     </div>
 
+    <!-- BARIS 2 - 3 KARTU -->
     <!-- BARIS 2 - 3 KARTU -->
     <div class="tiga-kartu">
       <div class="kartu-stat">
@@ -87,12 +84,12 @@
         </div>
       </div>
       <div class="kartu-stat">
-        <div class="kartu-stat-icon" style="background:#ede9fe">💹</div>
+        <div class="kartu-stat-icon" style="background:#ede9fe">🎯</div>
         <div class="kartu-stat-body">
-          <div class="kartu-stat-label">SAVING RATE</div>
-          <div class="kartu-stat-nilai" id="saving-rate" style="color:#6366f1">0%</div>
+          <div class="kartu-stat-label">SISA ANGGARAN BULAN INI</div>
+          <div class="kartu-stat-nilai" id="sisa-anggaran" style="color:#6366f1">Rp 0</div>
           <div id="saving-rate-label" class="kartu-stat-badge">-</div>
-          <div class="kartu-stat-avg">Target: >20% <span id="saving-rate-status" style="color:#16a34a;font-weight:600"></span></div>
+          <div class="kartu-stat-avg">Saving rate <strong id="saving-rate">0%</strong> · <span id="saving-rate-status" style="color:#16a34a;font-weight:600"></span></div>
         </div>
       </div>
     </div>

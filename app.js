@@ -394,19 +394,32 @@ function render() {
   if (last5.length === 0) {
     mini.innerHTML = '<li class="kosong">Belum ada transaksi.</li>';
   } else {
-    mini.innerHTML = last5.map(t => {
-      const sign = t.tipe === 'masuk' ? '+' : '-';
-      const color = t.tipe === 'masuk' ? '#16a34a' : '#dc2626';
-      return `
-        <li>
-          <div>
-            <div style="font-size:13px;font-weight:500;color:#1e293b">${t.keterangan}</div>
-            <div style="font-size:11px;color:#94a3b8">${t.kategori} · ${t.metode}</div>
-          </div>
-          <div style="font-size:13px;font-weight:600;color:${color}">${sign}${formatRupiah(t.jumlah)}</div>
-        </li>
-      `;
-    }).join('');
+    const ikonKategori = {
+    Gaji:'💼', Usaha:'🏪', Investasi:'📈', Piutang:'💰', Tabungan:'🏦', LAG:'🏠',
+    Sembako:'🛒', Toiletris:'🧴', Pengasuh:'👶', 'Kebutuhan Anak':'🍼', Liburan:'✈️',
+    Makan:'🍽️', Transport:'🚗', BBM:'⛽', Belanja:'🛍️', Listrik:'💡', Air:'💧',
+    Internet:'📶', Pulsa:'📱', 'Sekolah Anak':'📚', Kesehatan:'❤️', Pajak:'📋',
+    Asuransi:'🛡️', Sedekah:'🤲', Hiburan:'🎬', Pendidikan:'🎓', Hutang:'💸',
+    Transfer:'↔️', Lainnya:'📦'
+  };
+
+  mini.innerHTML = last5.map(t => {
+    const sign = t.tipe === 'masuk' ? '+' : '-';
+    const color = t.tipe === 'masuk' ? '#16a34a' : '#dc2626';
+    const bgColor = t.tipe === 'masuk' ? '#dcfce7' : '#fee2e2';
+    const ikon = ikonKategori[t.kategori] || '📦';
+    const tgl = new Date(t.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+    return `
+      <li style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f8fafc">
+        <div style="width:38px;height:38px;border-radius:10px;background:${bgColor};display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">${ikon}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:500;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.keterangan}</div>
+          <div style="font-size:11px;color:#94a3b8">${t.kategori} · ${t.metode} · ${tgl}</div>
+        </div>
+        <div style="font-size:13px;font-weight:600;color:${color};flex-shrink:0">${sign}${formatRupiah(t.jumlah)}</div>
+      </li>
+    `;
+  }).join('');
   }
 }
 

@@ -37,6 +37,7 @@ const metodeList = ['Cash', 'BNI', 'BSI', 'DANA', 'OVO', 'SeaBank', 'GoPay'];
 document.getElementById('tanggal').valueAsDate = new Date();
 
 onValue(transaksiRef, (snapshot) => {
+  
   transaksi = [];
   snapshot.forEach((child) => {
     transaksi.unshift({ _key: child.key, ...child.val() });
@@ -60,6 +61,7 @@ onValue(transaksiRef, (snapshot) => {
   render();
   renderBudget();
   renderInsight();
+  renderGrafikAll();
   renderGrafikSaldoHarian();
   renderGrafikPengeluaranHarian(); // ← tambahkan
   renderGrafikDonut();              // ← tambahkan

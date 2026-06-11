@@ -9,7 +9,37 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+<!-- HALAMAN LOGIN -->
+  <div id="halaman-login" style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f1f5f9">
+    <div style="background:white;border-radius:16px;padding:40px;width:100%;max-width:380px;box-shadow:0 4px 20px rgba(0,0,0,0.08)">
+      <div style="text-align:center;margin-bottom:28px">
+        <div style="font-size:40px;margin-bottom:8px">💰</div>
+        <h1 style="font-size:22px;font-weight:700;color:#1e293b;margin-bottom:4px">Keuangan Saya</h1>
+        <p style="font-size:14px;color:#94a3b8">Masuk untuk melanjutkan</p>
+      </div>
 
+      <div id="login-error" style="display:none;background:#fee2e2;color:#dc2626;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:16px"></div>
+
+      <div style="margin-bottom:14px">
+        <label style="font-size:13px;font-weight:500;color:#475569;display:block;margin-bottom:6px">Email</label>
+        <input type="email" id="login-email" placeholder="email@kamu.com" style="width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;font-family:'Inter',sans-serif;outline:none" />
+      </div>
+
+      <div style="margin-bottom:20px">
+        <label style="font-size:13px;font-weight:500;color:#475569;display:block;margin-bottom:6px">Password</label>
+        <input type="password" id="login-password" placeholder="Password" style="width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;font-family:'Inter',sans-serif;outline:none" onkeydown="if(event.key==='Enter') loginUser()" />
+      </div>
+
+      <button onclick="loginUser()" id="btn-login" style="width:100%;padding:12px;background:#6366f1;color:white;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">
+        Masuk
+      </button>
+
+      <p style="text-align:center;font-size:12px;color:#94a3b8;margin-top:20px">🔒 Data aman dan hanya dapat diakses oleh Anda</p>
+    </div>
+  </div>
+
+  <!-- APLIKASI UTAMA -->
+  <div id="aplikasi-utama" style="display:none">
   <div class="topbar">
     <span class="logo">💰 Keuangan Saya</span>
     <div class="nav-tabs">
@@ -20,7 +50,10 @@
       <button class="nav-tab" onclick="gotoTab('grafik', this)">Grafik</button>
       <button class="nav-tab" onclick="gotoTab('target', this)">🎯 Target</button>
     </div>
-    <button class="btn-export" onclick="exportExcel()">⬇ Export Excel</button>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="btn-export" onclick="exportExcel()">⬇ Export Excel</button>
+      <button onclick="logoutUser()" style="padding:7px 14px;font-size:13px;font-weight:500;background:#fee2e2;border:1.5px solid #fecaca;border-radius:8px;cursor:pointer;color:#dc2626;font-family:'Inter',sans-serif">Keluar</button>
+    </div>
   </div>
 
   <!-- TAB RINGKASAN -->
@@ -379,7 +412,7 @@
   </div>
 
 </div>
-
+</div> <!-- penutup aplikasi-utama -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
   <script type="module" src="app.js"></script>

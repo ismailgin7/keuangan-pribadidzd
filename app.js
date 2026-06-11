@@ -302,14 +302,31 @@ function render() {
   const now = new Date();
   const bulanIni = now.toISOString().slice(0, 7);
   const filteredBulanIni = transaksi.filter(t => t.tanggal.slice(0, 7) === bulanIni);
+  const pemasukanBulanIni = filteredBulanIni.filter(
+  t => t.tipe === 'masuk' && t.kategori !== 'Transfer'
+);
+
+const pengeluaranBulanIni = filteredBulanIni.filter(
+  t => t.tipe === 'keluar' && t.kategori !== 'Transfer'
+);
+
+const semuaPemasukan = transaksi.filter(
+  t => t.tipe === 'masuk' && t.kategori !== 'Transfer'
+);
+
+const semuaPengeluaran = transaksi.filter(
+  t => t.tipe === 'keluar' && t.kategori !== 'Transfer'
+);
 
   // Kartu dashboard - pemasukan & pengeluaran bulan ini
-  const totalMasuk = filteredBulanIni.filter(t => t.tipe === 'masuk' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
-  const totalKeluar = filteredBulanIni.filter(t => t.tipe === 'keluar' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
+  const totalMasuk = pemasukanBulanIni.reduce((s,t) => s+t.jumlah, 0);
+
+const totalKeluar = pengeluaranBulanIni.reduce((s,t) => s+t.jumlah, 0);
 
   // Saldo total keseluruhan
-  const allMasuk = transaksi.filter(t => t.tipe === 'masuk' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
-  const allKeluar = transaksi.filter(t => t.tipe === 'keluar' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
+  const allMasuk = semuaPemasukan.reduce((s,t) => s+t.jumlah, 0);
+
+  const allKeluar = semuaPengeluaran.reduce((s,t) => s+t.jumlah, 0);
   const saldo = allMasuk - allKeluar;
 
   document.getElementById('total-masuk').textContent = formatRupiah(totalMasuk);
@@ -327,7 +344,7 @@ function render() {
   if (elAvgKeluar) elAvgKeluar.textContent = formatRupiah(avgKeluar);
 
   // Jumlah transaksi keluar
-  const jmlKeluar = filteredBulanIni.filter(t => t.tipe === 'keluar' && t.kategori !== 'Transfer').length;
+  const jmlKeluar = pengeluaranBulanIni.length;
   const elJmlKeluar = document.getElementById('jml-transaksi-keluar');
   if (elJmlKeluar) elJmlKeluar.textContent = `Total ${jmlKeluar} transaksi`;
   // Cashflow bersih & saving rate

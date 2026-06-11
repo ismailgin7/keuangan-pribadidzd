@@ -1,3 +1,4 @@
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, push, onValue, remove, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
@@ -16,6 +17,7 @@ const db = getDatabase(app);
 const transaksiRef = ref(db, 'transaksi');
 const budgetRef = ref(db, 'budget');
 const hpRef = ref(db, 'hutangpiutang');
+const auth = getAuth(app);
 
 let transaksi = [];
 let tipeAktif = 'masuk';
@@ -1383,6 +1385,56 @@ function renderRekeningList() {
     </div>
   `).join('');
 }
+// ======= AUTH =======
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    // Sudah login — tampilkan aplikasi
+    document.getElementById('halaman-login').style.display = 'none';
+    document.getElementById('aplikasi-utama').style.display = 'block';
+  } else {
+    // Belum login — tampilkan halaman login
+    document.getElementById('halaman-login').style.display = 'flex';
+    document.getElementById('aplikasi-utama').style.display = 'none';
+  }
+});
+
+function loginUser() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errEl = document.getElementById('login-error');
+  const btnLogin = document.getElementById('btn-login');
+
+  if (!email || !password) {
+    errEl.style.display = 'block';
+    errEl.textContent = 'Isi email dan password terlebih dahulu!';
+    return;
+  }
+
+  btnLogin.textContent = 'Memuat...';
+  btnLogin.disabled = true;
+
+  signInWithEmailAndPassword(auth, email, password)
+    .then(() => {
+      errEl.style.display = 'none';
+    })
+    .catch((error) => {
+      btnLogin.textContent = 'Masuk';
+      btnLogin.disabled = false;
+      errEl.style.display = 'block';
+      if (error.code === 'auth/invalid-credential') {
+        errEl.textContent = 'Email atau password salah!';
+      } else if (error.code === 'auth/too-many-requests') {
+        errEl.textContent = 'Terlalu banyak percobaan. Coba lagi nanti.';
+      } else {
+        errEl.textContent = 'Gagal masuk. Coba lagi.';
+      }
+    });
+}
+
+function logoutUser() {
+  if (!confirm('Yakin mau keluar?')) return;
+  signOut(auth);
+}
 window.gotoTab = gotoTab;
 window.setType = setType;
 window.tambahTransaksi = tambahTransaksi;
@@ -1415,3 +1467,5 @@ window.editBudget = editBudget;
 window.editTransaksi = editTransaksi;
 window.renderInsight = renderInsight;
 window.renderGrafikSaldoHarian = renderGrafikSaldoHarian;
+window.loginUser = loginUser;
+window.logoutUser = logoutUser;

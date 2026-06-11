@@ -222,11 +222,17 @@ function updateTransaksi(key) {
     return;
   }
 
-  set(ref(db, 'transaksi/' + key), {
-    id: Date.now(),
-    tipe: tipeAktif,
-    keterangan, jumlah, kategori, tanggal, metode
-  });
+  const transaksiLama = transaksi.find(t => t._key === key);
+
+set(ref(db, 'transaksi/' + key), {
+  id: transaksiLama.id,
+  tipe: tipeAktif,
+  keterangan,
+  jumlah,
+  kategori,
+  tanggal,
+  metode
+});
 
   // Reset tombol simpan
   const btn = document.getElementById('btn-simpan-transaksi');

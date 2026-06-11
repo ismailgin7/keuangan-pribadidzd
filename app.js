@@ -464,6 +464,23 @@ function renderRiwayatTransaksi(filtered) {
   }
 }
 function renderSaldoRekening() {
+  const saldoPerMetode = {};
+
+  transaksi.forEach(t => {
+    if (!saldoPerMetode[t.metode]) {
+      saldoPerMetode[t.metode] = {
+        masuk: 0,
+        keluar: 0
+      };
+    }
+
+    if (t.tipe === 'masuk') {
+      saldoPerMetode[t.metode].masuk += t.jumlah;
+    } else {
+      saldoPerMetode[t.metode].keluar += t.jumlah;
+    }
+  });
+
   metodeList.forEach(m => {
     const kartu = document.getElementById('saldo-' + m);
 
@@ -471,17 +488,14 @@ function renderSaldoRekening() {
 
     const wrapper = kartu.closest('.card');
 
-    const masuk = transaksi
-      .filter(t => t.tipe === 'masuk' && t.metode === m)
-      .reduce((s, t) => s + t.jumlah, 0);
+    const data = saldoPerMetode[m] || {
+      masuk: 0,
+      keluar: 0
+    };
 
-    const keluar = transaksi
-      .filter(t => t.tipe === 'keluar' && t.metode === m)
-      .reduce((s, t) => s + t.jumlah, 0);
+    const saldoM = data.masuk - data.keluar;
 
-    const saldoM = masuk - keluar;
-
-    if (masuk === 0 && keluar === 0) {
+    if (data.masuk === 0 && data.keluar === 0) {
       if (wrapper) wrapper.style.display = 'none';
       return;
     }

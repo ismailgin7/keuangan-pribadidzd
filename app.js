@@ -360,21 +360,7 @@ function render() {
   }
 
   // Saldo per rekening - hanya tampil yang ada transaksinya
-  metodeList.forEach(m => {
-    const kartu = document.getElementById('saldo-' + m);
-    if (!kartu) return;
-    const wrapper = kartu.closest('.card');
-    const masuk = transaksi.filter(t => t.tipe === 'masuk' && t.metode === m).reduce((s,t) => s+t.jumlah, 0);
-    const keluar = transaksi.filter(t => t.tipe === 'keluar' && t.metode === m).reduce((s,t) => s+t.jumlah, 0);
-    const saldoM = masuk - keluar;
-    if (masuk === 0 && keluar === 0) {
-      if (wrapper) wrapper.style.display = 'none';
-      return;
-    }
-    if (wrapper) wrapper.style.display = 'block';
-    kartu.textContent = formatRupiah(Math.abs(saldoM));
-    kartu.style.color = saldoM < 0 ? '#dc2626' : '#1e293b';
-  });
+  renderSaldoRekening();
 
   // Riwayat transaksi full
   renderRiwayatTransaksi(filtered);
@@ -459,6 +445,35 @@ function renderRiwayatTransaksi(filtered) {
       `;
     }).join('');
   }
+}
+function renderSaldoRekening() {
+  metodeList.forEach(m => {
+    const kartu = document.getElementById('saldo-' + m);
+
+    if (!kartu) return;
+
+    const wrapper = kartu.closest('.card');
+
+    const masuk = transaksi
+      .filter(t => t.tipe === 'masuk' && t.metode === m)
+      .reduce((s, t) => s + t.jumlah, 0);
+
+    const keluar = transaksi
+      .filter(t => t.tipe === 'keluar' && t.metode === m)
+      .reduce((s, t) => s + t.jumlah, 0);
+
+    const saldoM = masuk - keluar;
+
+    if (masuk === 0 && keluar === 0) {
+      if (wrapper) wrapper.style.display = 'none';
+      return;
+    }
+
+    if (wrapper) wrapper.style.display = 'block';
+
+    kartu.textContent = formatRupiah(Math.abs(saldoM));
+    kartu.style.color = saldoM < 0 ? '#dc2626' : '#1e293b';
+  });
 }
 // ======= BUDGET =======
 function simpanBudget() {

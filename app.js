@@ -377,26 +377,7 @@ function render() {
   });
 
   // Riwayat transaksi full
-  const list = document.getElementById('list-transaksi');
-  if (filtered.length === 0) {
-    list.innerHTML = '<li class="kosong">Tidak ada transaksi.</li>';
-  } else {
-    list.innerHTML = filtered.map(t => {
-      const tgl = new Date(t.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
-      const sign = t.tipe === 'masuk' ? '+' : '-';
-      return `
-        <li>
-          <div class="tx-info">
-            <div class="tx-nama">${t.keterangan}</div>
-            <div class="tx-meta">${t.kategori} · ${t.metode} · ${tgl}</div>
-          </div>
-          <div class="tx-nominal ${t.tipe}">${sign}${formatRupiah(t.jumlah)}</div>
-          <button class="tx-edit" onclick="editTransaksi('${t._key}')">✏️</button>
-        <button class="tx-hapus" onclick="hapus('${t._key}')">🗑</button>
-        </li>
-      `;
-    }).join('');
-  }
+  renderRiwayatTransaksi(filtered);
 
   renderMiniTransaksi();
   }
@@ -440,6 +421,40 @@ function render() {
             <div style="font-size:11px;color:#94a3b8">${t.kategori} · ${t.metode} · ${tgl}</div>
           </div>
           <div style="font-size:13px;font-weight:600;color:${color};flex-shrink:0">${sign}${formatRupiah(t.jumlah)}</div>
+        </li>
+      `;
+    }).join('');
+  }
+}
+function renderRiwayatTransaksi(filtered) {
+  const list = document.getElementById('list-transaksi');
+
+  if (filtered.length === 0) {
+    list.innerHTML = '<li class="kosong">Tidak ada transaksi.</li>';
+  } else {
+    list.innerHTML = filtered.map(t => {
+      const tgl = new Date(t.tanggal).toLocaleDateString(
+        'id-ID',
+        {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric'
+        }
+      );
+
+      const sign = t.tipe === 'masuk' ? '+' : '-';
+
+      return `
+        <li>
+          <div class="tx-info">
+            <div class="tx-nama">${t.keterangan}</div>
+            <div class="tx-meta">${t.kategori} · ${t.metode} · ${tgl}</div>
+          </div>
+          <div class="tx-nominal ${t.tipe}">
+            ${sign}${formatRupiah(t.jumlah)}
+          </div>
+          <button class="tx-edit" onclick="editTransaksi('${t._key}')">✏️</button>
+          <button class="tx-hapus" onclick="hapus('${t._key}')">🗑</button>
         </li>
       `;
     }).join('');

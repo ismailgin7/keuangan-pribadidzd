@@ -1401,7 +1401,7 @@ function renderRekeningList() {
         <div style="width:36px;height:36px;border-radius:10px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;font-size:18px">${ikonRekening[r.nama]||'🏦'}</div>
         <span style="font-size:13px;font-weight:500;color:#1e293b">${r.nama}</span>
       </div>
-      <span style="font-size:13px;font-weight:600;color:${r.saldo < 0 ? '#dc2626' : '#1e293b'}">${formatRupiah(r.saldo)}</span>
+      <span style="font-size:13px;font-weight:600;color:${r.saldo < 0 ? '#dc2626' : '#1e293b'}">${r.saldo < 0 ? '-' : ''}${formatRupiah(Math.abs(r.saldo))}</span>
     </div>
   `).join('');
 }

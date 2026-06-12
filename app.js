@@ -1687,7 +1687,7 @@ async function cekDanKirimNotifikasi() {
 async function aktifkanNotifikasi() {
   const izin = await mintaIzinNotifikasi();
   if (izin) {
-    kirimNotifikasi('🔔 Notifikasi Aktif!', 'Moneta akan memberi tahu kamu kalau anggaran hampir habis atau target mendekati deadline.');
+    kirimNotifikasi('🔔 Notifikasi Aktif!', 'Savvy akan memberi tahu kamu kalau anggaran hampir habis atau target mendekati deadline.');
     alert('✅ Notifikasi berhasil diaktifkan!');
   } else {
     alert('❌ Izin notifikasi ditolak. Aktifkan manual di pengaturan browser kamu.');

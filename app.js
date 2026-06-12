@@ -1611,6 +1611,20 @@ function restoreData(event) {
 
   reader.readAsText(file);
 }
+// ======= DROPDOWN MENU =======
+function toggleMenu() {
+  const menu = document.getElementById('dropdown-menu');
+  menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+}
+
+// Tutup menu kalau klik di luar
+document.addEventListener('click', (e) => {
+  const menu = document.getElementById('dropdown-menu');
+  const btn = document.querySelector('.btn-menu');
+  if (menu && btn && !menu.contains(e.target) && !btn.contains(e.target)) {
+    menu.style.display = 'none';
+  }
+});
 window.gotoTab = gotoTab;
 window.setType = setType;
 window.tambahTransaksi = tambahTransaksi;
@@ -1647,3 +1661,4 @@ window.loginUser = loginUser;
 window.logoutUser = logoutUser;
 window.backupData = backupData;
 window.restoreData = restoreData;
+window.toggleMenu = toggleMenu;

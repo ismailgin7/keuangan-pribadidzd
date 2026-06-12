@@ -1516,6 +1516,101 @@ function logoutUser() {
   if (!confirm('Yakin mau keluar?')) return;
   signOut(auth);
 }
+// ======= BACKUP & RESTORE =======
+function backupData() {
+  const data = {
+    versi: '1.0',
+    tanggalBackup: new Date().toISOString(),
+    transaksi: transaksi,
+    budget: budget,
+    hutangpiutang: hpData,
+    target: targetData
+  };
+
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const tgl = new Date().toISOString().slice(0, 10);
+  a.href = url;
+  a.download = `backup-keuangan-${tgl}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+
+  alert(`✅ Backup berhasil! File tersimpan sebagai backup-keuangan-${tgl}.json`);
+}
+
+function restoreData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+
+      if (!data.transaksi && !data.budget) {
+        alert('❌ File tidak valid! Pastikan file backup yang benar.');
+        return;
+      }
+
+      const konfirmasi = confirm(
+        `File backup tertanggal: ${data.tanggalBackup ? new Date(data.tanggalBackup).toLocaleDateString('id-ID', {day:'numeric',month:'long',year:'numeric'}) : 'Tidak diketahui'}\n\n` +
+        `Data yang akan di-restore:\n` +
+        `• Transaksi: ${data.transaksi?.length || 0} data\n` +
+        `• Anggaran: ${Object.keys(data.budget || {}).length} kategori\n` +
+        `• Hutang/Piutang: ${data.hutangpiutang?.length || 0} data\n` +
+        `• Target: ${data.target?.length || 0} data\n\n` +
+        `⚠️ Data yang ada sekarang akan DIGANTI. Lanjutkan?`
+      );
+
+      if (!konfirmasi) {
+        document.getElementById('input-restore').value = '';
+        return;
+      }
+
+      // Restore transaksi
+      if (data.transaksi && data.transaksi.length > 0) {
+        await set(ref(db, 'transaksi'), null);
+        for (const t of data.transaksi) {
+          const { _key, ...dataT } = t;
+          await push(transaksiRef, dataT);
+        }
+      }
+
+      // Restore budget
+      if (data.budget && Object.keys(data.budget).length > 0) {
+        await set(ref(db, 'budget'), data.budget);
+      }
+
+      // Restore hutang piutang
+      if (data.hutangpiutang && data.hutangpiutang.length > 0) {
+        await set(ref(db, 'hutangpiutang'), null);
+        for (const h of data.hutangpiutang) {
+          const { _key, ...dataH } = h;
+          await push(hpRef, dataH);
+        }
+      }
+
+      // Restore target
+      if (data.target && data.target.length > 0) {
+        await set(ref(db, 'target'), null);
+        for (const t of data.target) {
+          const { _key, ...dataT } = t;
+          await push(targetRef, dataT);
+        }
+      }
+
+      document.getElementById('input-restore').value = '';
+      alert('✅ Restore berhasil! Data sudah dipulihkan.');
+
+    } catch (err) {
+      alert('❌ Gagal restore. File mungkin rusak atau format tidak sesuai.');
+      console.error(err);
+    }
+  };
+
+  reader.readAsText(file);
+}
 window.gotoTab = gotoTab;
 window.setType = setType;
 window.tambahTransaksi = tambahTransaksi;
@@ -1550,3 +1645,5 @@ window.renderInsight = renderInsight;
 window.renderGrafikSaldoHarian = renderGrafikSaldoHarian;
 window.loginUser = loginUser;
 window.logoutUser = logoutUser;
+window.backupData = backupData;
+window.restoreData = restoreData;

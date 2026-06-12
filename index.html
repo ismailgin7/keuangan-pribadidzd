@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Keuangan Saya</title>
+  <title>Moneta</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
@@ -13,8 +13,8 @@
   <div id="halaman-login" style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f1f5f9">
     <div style="background:white;border-radius:16px;padding:40px;width:100%;max-width:380px;box-shadow:0 4px 20px rgba(0,0,0,0.08)">
       <div style="text-align:center;margin-bottom:28px">
-        <div style="font-size:40px;margin-bottom:8px">💰</div>
-        <h1 style="font-size:22px;font-weight:700;color:#1e293b;margin-bottom:4px">Keuangan Saya</h1>
+        <div style="font-size:40px;margin-bottom:8px">✦</div>
+        <h1 style="font-size:26px;font-weight:700;color:#1e293b;margin-bottom:4px;letter-spacing:-0.5px">Moneta</h1>
         <p style="font-size:14px;color:#94a3b8">Masuk untuk melanjutkan</p>
       </div>
 
@@ -41,21 +41,27 @@
   <!-- APLIKASI UTAMA -->
   <div id="aplikasi-utama" style="display:none">
   <div class="topbar">
-    <span class="logo">💰 Keuangan Saya</span>
+    <span class="logo">✦ Moneta</span>
     <div class="nav-tabs">
       <button class="nav-tab active" onclick="gotoTab('ringkasan', this)">Ringkasan</button>
       <button class="nav-tab" onclick="gotoTab('transaksi', this)">Transaksi</button>
       <button class="nav-tab" onclick="gotoTab('anggaran', this)">Anggaran</button>
       <button class="nav-tab" onclick="gotoTab('hutang', this)">Hutang & Piutang</button>
       <button class="nav-tab" onclick="gotoTab('grafik', this)">Grafik</button>
-      <button class="nav-tab" onclick="gotoTab('target', this)">🎯 Target</button>
+      <button class="nav-tab" onclick="gotoTab('target', this)">Target</button>
     </div>
-    <div style="display:flex;gap:8px;align-items:center">
-      <button class="btn-export" onclick="exportExcel()">⬇ Excel</button>
-      <button class="btn-export" onclick="backupData()">💾 Backup</button>
-      <button class="btn-export" onclick="document.getElementById('input-restore').click()">📂 Restore</button>
-      <input type="file" id="input-restore" accept=".json" style="display:none" onchange="restoreData(event)" />
-      <button onclick="logoutUser()" style="padding:7px 14px;font-size:13px;font-weight:500;background:#fee2e2;border:1.5px solid #fecaca;border-radius:8px;cursor:pointer;color:#dc2626;font-family:'Inter',sans-serif">Keluar</button>
+    <div class="topbar-actions">
+      <div class="topbar-menu">
+        <button class="btn-menu" onclick="toggleMenu()">⋯</button>
+        <div id="dropdown-menu" class="dropdown-menu" style="display:none">
+          <button onclick="exportExcel();toggleMenu()">⬇ Export Excel</button>
+          <button onclick="backupData();toggleMenu()">💾 Backup Data</button>
+          <button onclick="document.getElementById('input-restore').click();toggleMenu()">📂 Restore Data</button>
+          <input type="file" id="input-restore" accept=".json" style="display:none" onchange="restoreData(event)" />
+          <div class="dropdown-divider"></div>
+          <button onclick="logoutUser()" style="color:#dc2626">🚪 Keluar</button>
+        </div>
+      </div>
     </div>
   </div>
 

@@ -66,6 +66,7 @@ onValue(transaksiRef, (snapshot) => {
   renderGrafikPengeluaranHarian(); // ← tambahkan
   renderGrafikDonut();              // ← tambahkan
   renderRekeningList();             // ← tambahkan
+  cekDanKirimNotifikasi();
 });
 onValue(hpRef, (snapshot) => {
   hpData = [];
@@ -1625,6 +1626,74 @@ document.addEventListener('click', (e) => {
     menu.style.display = 'none';
   }
 });
+// ======= NOTIFIKASI BROWSER =======
+async function mintaIzinNotifikasi() {
+  if (!('Notification' in window)) return false;
+  if (Notification.permission === 'granted') return true;
+  if (Notification.permission === 'denied') return false;
+  const result = await Notification.requestPermission();
+  return result === 'granted';
+}
+
+function kirimNotifikasi(judul, isi, ikon = '✦') {
+  if (Notification.permission !== 'granted') return;
+  new Notification(judul, {
+    body: isi,
+    icon: '/favicon.ico',
+    badge: '/favicon.ico'
+  });
+}
+
+async function cekDanKirimNotifikasi() {
+  const izin = await mintaIzinNotifikasi();
+  if (!izin) return;
+
+  const bulanIni = new Date().toISOString().slice(0, 7);
+
+  // Cek anggaran
+  Object.keys(budget).forEach(kat => {
+    const batas = budget[kat];
+    const terpakai = transaksi
+      .filter(t => t.tipe === 'keluar' && t.kategori === kat && t.tanggal.slice(0, 7) === bulanIni)
+      .reduce((s, t) => s + t.jumlah, 0);
+    const persen = batas > 0 ? ((terpakai / batas) * 100).toFixed(0) : 0;
+
+    if (terpakai > batas) {
+      kirimNotifikasi(
+        `🚨 Anggaran ${kat} Melebihi Batas!`,
+        `Terpakai ${formatRupiah(terpakai)} dari ${formatRupiah(batas)}. Segera evaluasi pengeluaran.`
+      );
+    } else if (persen >= 80 && persen < 100) {
+      kirimNotifikasi(
+        `⚡ Anggaran ${kat} Hampir Habis`,
+        `Sudah terpakai ${persen}% (${formatRupiah(terpakai)} dari ${formatRupiah(batas)}).`
+      );
+    }
+  });
+
+  // Cek target deadline
+  targetData.forEach(t => {
+    if (!t.deadline) return;
+    const hari = Math.ceil((new Date(t.deadline) - new Date()) / (1000 * 60 * 60 * 24));
+    const persen = t.jumlah > 0 ? ((t.terkumpul || 0) / t.jumlah * 100).toFixed(0) : 0;
+    if (hari > 0 && hari <= 30 && persen < 100) {
+      kirimNotifikasi(
+        `⏰ Target ${t.nama} Mendekati Deadline`,
+        `${hari} hari lagi, baru tercapai ${persen}%. Yuk tambah dana!`
+      );
+    }
+  });
+}
+async function aktifkanNotifikasi() {
+  const izin = await mintaIzinNotifikasi();
+  if (izin) {
+    kirimNotifikasi('🔔 Notifikasi Aktif!', 'Moneta akan memberi tahu kamu kalau anggaran hampir habis atau target mendekati deadline.');
+    alert('✅ Notifikasi berhasil diaktifkan!');
+  } else {
+    alert('❌ Izin notifikasi ditolak. Aktifkan manual di pengaturan browser kamu.');
+  }
+  toggleMenu();
+}
 window.gotoTab = gotoTab;
 window.setType = setType;
 window.tambahTransaksi = tambahTransaksi;
@@ -1662,3 +1731,4 @@ window.logoutUser = logoutUser;
 window.backupData = backupData;
 window.restoreData = restoreData;
 window.toggleMenu = toggleMenu;
+window.aktifkanNotifikasi = aktifkanNotifikasi;

@@ -1732,3 +1732,4 @@ window.backupData = backupData;
 window.restoreData = restoreData;
 window.toggleMenu = toggleMenu;
 window.aktifkanNotifikasi = aktifkanNotifikasi;
+window.cekDanKirimNotifikasi = cekDanKirimNotifikasi;

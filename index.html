@@ -51,7 +51,10 @@
       <button class="nav-tab" onclick="gotoTab('target', this)">🎯 Target</button>
     </div>
     <div style="display:flex;gap:8px;align-items:center">
-      <button class="btn-export" onclick="exportExcel()">⬇ Export Excel</button>
+      <button class="btn-export" onclick="exportExcel()">⬇ Excel</button>
+      <button class="btn-export" onclick="backupData()">💾 Backup</button>
+      <button class="btn-export" onclick="document.getElementById('input-restore').click()">📂 Restore</button>
+      <input type="file" id="input-restore" accept=".json" style="display:none" onchange="restoreData(event)" />
       <button onclick="logoutUser()" style="padding:7px 14px;font-size:13px;font-weight:500;background:#fee2e2;border:1.5px solid #fecaca;border-radius:8px;cursor:pointer;color:#dc2626;font-family:'Inter',sans-serif">Keluar</button>
     </div>
   </div>

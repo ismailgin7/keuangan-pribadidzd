@@ -21,7 +21,13 @@ body {
   height: 52px;
 }
 
-.logo { font-size: 17px; font-weight: 700; color: #1e293b; }
+.logo {
+  font-size: 18px;
+  font-weight: 700;
+  color: #6366f1;
+  letter-spacing: -0.5px;
+  white-space: nowrap;
+}
 
 .btn-export {
   padding: 7px 14px;
@@ -564,89 +570,58 @@ body {
 @media (max-width: 768px) {
   .tiga-kartu { grid-template-columns: 1fr; }
 }
-@media (max-width: 768px) {
+/* TOPBAR ACTIONS */
+.topbar-actions { display: flex; align-items: center; gap: 8px; }
 
-  /* TOPBAR */
-  .topbar {
-    flex-wrap: wrap;
-    height: auto;
-    padding: 10px 16px;
-    gap: 8px;
-  }
+.topbar-menu { position: relative; }
 
-  .logo { font-size: 15px; }
+.btn-menu {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1.5px solid #e2e8f0;
+  background: #f8fafc;
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #475569;
+  font-family: 'Inter', sans-serif;
+}
 
-  .nav-tabs {
-    order: 3;
-    width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    border-top: 1px solid #f1f5f9;
-    padding-top: 4px;
-  }
+.btn-menu:hover { background: #e2e8f0; }
 
-  .nav-tabs::-webkit-scrollbar { display: none; }
+.dropdown-menu {
+  position: absolute;
+  right: 0;
+  top: 44px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  min-width: 180px;
+  z-index: 200;
+  overflow: hidden;
+}
 
-  .nav-tab {
-    padding: 8px 12px;
-    font-size: 12px;
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
+.dropdown-menu button {
+  display: block;
+  width: 100%;
+  padding: 11px 16px;
+  text-align: left;
+  border: none;
+  background: none;
+  font-size: 13px;
+  font-family: 'Inter', sans-serif;
+  color: #1e293b;
+  cursor: pointer;
+}
 
-  .btn-export {
-    font-size: 12px;
-    padding: 6px 10px;
-  }
+.dropdown-menu button:hover { background: #f8fafc; }
 
-  /* TAB CONTENT */
-  .tab-content { padding: 12px 14px; }
-
-  /* HERO SALDO */
-  .hero-saldo {
-    grid-template-columns: 1fr;
-    padding: 16px;
-  }
-
-  .hero-kiri {
-    padding-right: 0;
-    border-right: none;
-    border-bottom: 1px solid #f1f5f9;
-    padding-bottom: 16px;
-    margin-bottom: 16px;
-  }
-
-  .hero-kanan { padding-left: 0; }
-  .hero-nilai { font-size: 28px; }
-
-  /* TIGA KARTU */
-  .tiga-kartu { grid-template-columns: 1fr; }
-
-  /* TWO COL */
-  .two-col { grid-template-columns: 1fr; }
-
-  /* FORM GRID */
-  .form-grid { grid-template-columns: 1fr; }
-
-  /* BUDGET FORM */
-  .budget-form { flex-direction: column; }
-  .budget-form select,
-  .budget-form input,
-  .budget-form .btn-simpan {
-    width: 100%;
-    min-width: unset;
-  }
-
-  /* KARTU STAT */
-  .kartu-stat { padding: 14px; }
-  .kartu-stat-nilai { font-size: 20px; }
-
-  /* TRANSAKSI */
-  .tx-list li { font-size: 13px; }
-  .tx-nama { font-size: 13px; }
-
-  /* FILTER */
-  .filter-type-toggle { flex-wrap: wrap; }
-  .filter-type-btn { flex: 1; min-width: 70px; }
+.dropdown-divider {
+  height: 1px;
+  background: #f1f5f9;
+  margin: 4px 0;
 }

@@ -24,8 +24,7 @@ let currentUser = null;
 let transaksiRef, budgetRef, hpRef, targetRef;
 
 function getBasePath() {
-  if (modeAktif === 'keluarga') return 'keluarga';
-  return `pribadi/${currentUser.uid}`;
+  return '';
 }
 
 function updateRefs() {

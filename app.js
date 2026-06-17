@@ -36,6 +36,10 @@ function updateRefs() {
 }
 
 let transaksi = [];
+let saldoAwal = {};
+saldoAwal = JSON.parse(
+  localStorage.getItem('saldoAwal') || '{}'
+);
 let tipeAktif = 'masuk';
 let grafikInstance = null;
 let grafikSaldoInstance = null;
@@ -128,6 +132,7 @@ function hentikanListeners() {
 function gantiMode() {
   modeAktif = modeAktif === 'keluarga' ? 'pribadi' : 'keluarga';
   localStorage.setItem('modeAktif', modeAktif);
+  localStorage.setItem('saldoAwal', JSON.stringify(saldoAwal));
   updateRefs();
   updateModeUI();
   mulaiListeners();
@@ -628,8 +633,11 @@ function renderRekeningList() {
   metodeList.forEach(m => {
     const masuk = transaksi.filter(t => t.tipe === 'masuk' && t.metode === m).reduce((s,t) => s+t.jumlah, 0);
     const keluar = transaksi.filter(t => t.tipe === 'keluar' && t.metode === m).reduce((s,t) => s+t.jumlah, 0);
-    const saldo = masuk - keluar;
-    if (masuk > 0 || keluar > 0) { rekeningAktif.push({ nama: m, saldo }); totalSaldo += saldo; }
+    const saldo = (saldoAwal[m] || 0) + masuk - keluar;
+    if ((saldoAwal[m] || 0) > 0 || masuk > 0 || keluar > 0) {
+    rekeningAktif.push({ nama: m, saldo });
+    totalSaldo += saldo;
+}
   });
   if (elTotal) elTotal.textContent = formatRupiah(totalSaldo);
   if (rekeningAktif.length === 0) { container.innerHTML = '<p style="font-size:13px;color:#94a3b8;text-align:center;padding:12px">Belum ada rekening.</p>'; return; }
@@ -1016,6 +1024,20 @@ function loginUser() {
 function logoutUser() {
   if (!confirm('Yakin mau keluar?')) return;
   signOut(auth);
+}
+function aturSaldoAwal() {
+  metodeList.forEach(metode => {
+    const nilai = prompt(
+      `Masukkan saldo awal ${metode}`,
+      saldoAwal[metode] || 0
+    );
+
+    if (nilai !== null) {
+      saldoAwal[metode] = parseFloat(nilai) || 0;
+    }
+  });
+
+  renderRekeningList();
 }
 
 // ======= EXPOSE =======

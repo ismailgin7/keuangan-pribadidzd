@@ -53,7 +53,11 @@ let listenerRefs = [];
 const metodeList = ['Cash', 'BNI', 'BSI', 'DANA', 'OVO', 'SeaBank', 'GoPay'];
 
 // ======= AUTH =======
+// Tampilkan loading saat pertama buka
+document.getElementById('loading-screen').style.display = 'flex';
+
 onAuthStateChanged(auth, (user) => {
+  document.getElementById('loading-screen').style.display = 'none';
   if (user) {
     currentUser = user;
     document.getElementById('halaman-login').style.display = 'none';
@@ -1007,6 +1011,7 @@ function loginUser() {
       errEl.style.display = 'block';
       if (error.code === 'auth/invalid-credential') errEl.textContent = 'Email atau password salah!';
       else if (error.code === 'auth/too-many-requests') errEl.textContent = 'Terlalu banyak percobaan. Coba lagi nanti.';
+      else if (error.code === 'auth/network-request-failed') errEl.textContent = 'Tidak ada koneksi internet. Periksa jaringan kamu.';
       else errEl.textContent = 'Gagal masuk. Coba lagi.';
     });
 }
@@ -1015,6 +1020,26 @@ function logoutUser() {
   if (!confirm('Yakin mau keluar?')) return;
   signOut(auth);
 }
+// ======= ERROR HANDLING =======
+function tampilkanError(pesan) {
+  const banner = document.getElementById('error-banner');
+  const text = document.getElementById('error-banner-text');
+  if (banner && text) {
+    text.textContent = '⚠️ ' + pesan;
+    banner.style.display = 'flex';
+    setTimeout(() => { banner.style.display = 'none'; }, 5000);
+  }
+}
+
+// Deteksi koneksi internet
+window.addEventListener('online', () => {
+  const banner = document.getElementById('error-banner');
+  if (banner) banner.style.display = 'none';
+});
+
+window.addEventListener('offline', () => {
+  tampilkanError('Tidak ada koneksi internet. Data mungkin tidak tersinkron.');
+});
 
 // ======= EXPOSE =======
 window.gotoTab = gotoTab;
@@ -1054,3 +1079,4 @@ window.updateTarget = updateTarget;
 window.updateHP = updateHP;
 window.updateBudget = updateBudget;
 window.updateTransaksi = updateTransaksi;
+window.tampilkanError = tampilkanError;

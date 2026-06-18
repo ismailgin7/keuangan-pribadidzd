@@ -38,6 +38,22 @@
     </div>
   </div>
 
+  <!-- LOADING SCREEN -->
+  <div id="loading-screen" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:white;z-index:9999;flex-direction:column;align-items:center;justify-content:center">
+    <div style="font-size:32px;margin-bottom:12px">◈</div>
+    <div style="font-size:18px;font-weight:700;color:#6366f1;letter-spacing:-0.5px;margin-bottom:8px">Savvy</div>
+    <div style="display:flex;gap:6px;margin-top:8px">
+      <div class="dot-loader"></div>
+      <div class="dot-loader" style="animation-delay:0.2s"></div>
+      <div class="dot-loader" style="animation-delay:0.4s"></div>
+    </div>
+  </div>
+
+  <!-- ERROR BANNER -->
+  <div id="error-banner" style="display:none;position:fixed;top:0;left:0;width:100%;background:#fee2e2;color:#dc2626;padding:10px 20px;font-size:13px;font-weight:500;z-index:9998;display:none;justify-content:space-between;align-items:center">
+    <span id="error-banner-text">⚠️ Koneksi bermasalah. Mencoba menghubungkan kembali...</span>
+    <button onclick="document.getElementById('error-banner').style.display='none'" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:16px">✕</button>
+  </div>
   <!-- APLIKASI UTAMA -->
   <div id="aplikasi-utama" style="display:none">
   <div class="topbar">

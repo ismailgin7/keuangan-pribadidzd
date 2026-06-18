@@ -65,6 +65,7 @@
       <button class="nav-tab" onclick="gotoTab('hutang', this)">Hutang & Piutang</button>
       <button class="nav-tab" onclick="gotoTab('grafik', this)">Grafik</button>
       <button class="nav-tab" onclick="gotoTab('target', this)">Target</button>
+      <button class="nav-tab" onclick="gotoTab('pengaturan', this)">⚙️ Pengaturan</button>
     </div>
     <div class="topbar-actions">
       <div class="topbar-menu">
@@ -430,6 +431,52 @@
           <button onclick="tutupDanaTarget()" style="padding:10px;border:1.5px solid #e2e8f0;border-radius:10px;background:white;cursor:pointer;font-family:'Inter',sans-serif;font-size:14px">Batal</button>
         </div>
       </div>
+    </div>
+  </div>
+  <!-- TAB PENGATURAN -->
+  <div id="tab-pengaturan" class="tab-content">
+    <div class="two-col">
+
+      <!-- KATEGORI PENGELUARAN -->
+      <div class="section-box">
+        <div class="section-title">🛒 Kategori Pengeluaran</div>
+        <div id="list-kat-keluar" style="margin-bottom:12px"></div>
+        <div style="display:flex;gap:8px">
+          <input type="text" id="input-kat-keluar" placeholder="Nama kategori baru" style="flex:1;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;background:#f8fafc;font-family:'Inter',sans-serif" />
+          <button onclick="tambahKategori('keluar')" style="padding:9px 14px;background:#6366f1;color:white;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">+ Tambah</button>
+        </div>
+      </div>
+
+      <!-- KATEGORI PEMASUKAN -->
+      <div class="section-box">
+        <div class="section-title">💰 Kategori Pemasukan</div>
+        <div id="list-kat-masuk" style="margin-bottom:12px"></div>
+        <div style="display:flex;gap:8px">
+          <input type="text" id="input-kat-masuk" placeholder="Nama kategori baru" style="flex:1;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;background:#f8fafc;font-family:'Inter',sans-serif" />
+          <button onclick="tambahKategori('masuk')" style="padding:9px 14px;background:#6366f1;color:white;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">+ Tambah</button>
+        </div>
+      </div>
+
+      <!-- BANK & DOMPET -->
+      <div class="section-box">
+        <div class="section-title">🏦 Bank & Dompet</div>
+        <div id="list-bank" style="margin-bottom:12px"></div>
+        <div style="display:flex;gap:8px">
+          <input type="text" id="input-bank" placeholder="Nama bank/dompet baru" style="flex:1;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;background:#f8fafc;font-family:'Inter',sans-serif" />
+          <button onclick="tambahBank()" style="padding:9px 14px;background:#6366f1;color:white;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">+ Tambah</button>
+        </div>
+      </div>
+
+      <!-- INFO -->
+      <div class="section-box">
+        <div class="section-title">ℹ️ Informasi</div>
+        <div style="font-size:13px;color:#94a3b8;line-height:1.8">
+          <p>• Kategori dan bank yang dihapus tidak menghapus transaksi lama.</p>
+          <p>• Perubahan langsung berlaku di form transaksi.</p>
+          <p>• Data pengaturan tersinkron antar perangkat.</p>
+        </div>
+      </div>
+
     </div>
   </div>
   <!-- TAB GRAFIK -->

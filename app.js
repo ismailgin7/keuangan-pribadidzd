@@ -32,6 +32,7 @@ function updateRefs() {
   budgetRef = ref(db, 'budget');
   hpRef = ref(db, 'hutangpiutang');
   targetRef = ref(db, 'target');
+  pengaturanRef = ref(db, 'pengaturan');
 }
 
 let transaksi = [];
@@ -49,6 +50,16 @@ let targetData = [];
 let targetDanaKey = null;
 let filterType = 'semua';
 let listenerRefs = [];
+
+// Default kategori & bank
+const defaultKatKeluar = ['LAG','Sembako','Toiletris','Pengasuh','Kebutuhan Anak','Sekolah Anak','Liburan','Makan','Transport','BBM','Belanja','Listrik','Air','Internet','Pulsa','Kesehatan','Pajak','Asuransi','Sedekah','Investasi','Hiburan','Pendidikan','Hutang','Lainnya'];
+const defaultKatMasuk = ['Gaji','Usaha','Investasi','Piutang','Tabungan','Lainnya'];
+const defaultBank = ['Cash','BNI','BSI','DANA','OVO','SeaBank','GoPay'];
+
+let katKeluar = [...defaultKatKeluar];
+let katMasuk = [...defaultKatMasuk];
+let bankList = [...defaultBank];
+let pengaturanRef;
 
 const metodeList = ['Cash', 'BNI', 'BSI', 'DANA', 'OVO', 'SeaBank', 'GoPay'];
 
@@ -113,7 +124,22 @@ function mulaiListeners() {
     });
     renderTarget();
   });
+const l5 = onValue(pengaturanRef, (snapshot) => {
+    const data = snapshot.val() || {};
+    katKeluar = data.katKeluar || [...defaultKatKeluar];
+    katMasuk = data.katMasuk || [...defaultKatMasuk];
+    bankList = data.bankList || [...defaultBank];
+    renderPengaturan();
+    updateFormOptions();
+  });
 
+  listenerRefs = [
+    { ref: transaksiRef, fn: l1 },
+    { ref: budgetRef, fn: l2 },
+    { ref: hpRef, fn: l3 },
+    { ref: targetRef, fn: l4 },
+    { ref: pengaturanRef, fn: l5 }
+  ];
   listenerRefs = [
     { ref: transaksiRef, fn: l1 },
     { ref: budgetRef, fn: l2 },
@@ -193,42 +219,11 @@ function setType(tipe) {
 
   if (tipe === 'masuk') {
     document.getElementById('btn-masuk').className = 'active-income';
-    document.getElementById('kategori').innerHTML = `
-      <option value="Gaji">Gaji</option>
-      <option value="Usaha">Usaha</option>
-      <option value="Investasi">Investasi</option>
-      <option value="Piutang">Piutang</option>
-      <option value="Tabungan">Tabungan</option>
-      <option value="Lainnya">Lainnya</option>
-    `;
+    document.getElementById('kategori').innerHTML = katMasuk.map(k => `<option value="${k}">${k}</option>`).join('');
   } else if (tipe === 'keluar') {
     document.getElementById('btn-keluar').className = 'active-expense';
-    document.getElementById('kategori').innerHTML = `
-      <option value="LAG">LAG</option>
-      <option value="Sembako">Sembako</option>
-      <option value="Toiletris">Toiletris</option>
-      <option value="Pengasuh">Pengasuh</option>
-      <option value="Kebutuhan Anak">Kebutuhan Anak</option>
-      <option value="Sekolah Anak">Sekolah Anak</option>
-      <option value="Liburan">Liburan</option>
-      <option value="Makan">Makan</option>
-      <option value="Transport">Transport</option>
-      <option value="BBM">BBM</option>
-      <option value="Belanja">Belanja</option>
-      <option value="Listrik">Listrik</option>
-      <option value="Air">Air</option>
-      <option value="Internet">Internet</option>
-      <option value="Pulsa">Pulsa</option>
-      <option value="Kesehatan">Kesehatan</option>
-      <option value="Pajak">Pajak</option>
-      <option value="Asuransi">Asuransi</option>
-      <option value="Sedekah">Sedekah</option>
-      <option value="Investasi">Investasi</option>
-      <option value="Hiburan">Hiburan</option>
-      <option value="Pendidikan">Pendidikan</option>
-      <option value="Hutang">Hutang</option>
-      <option value="Lainnya">Lainnya</option>
-    `;
+    document.getElementById('kategori').innerHTML = katKeluar.map(k => `<option value="${k}">${k}</option>`).join('');
+  }
   } else if (tipe === 'transfer') {
     document.getElementById('btn-transfer').className = 'active-transfer';
     document.getElementById('form-utama').style.display = 'none';
@@ -1040,6 +1035,116 @@ window.addEventListener('online', () => {
 window.addEventListener('offline', () => {
   tampilkanError('Tidak ada koneksi internet. Data mungkin tidak tersinkron.');
 });
+// ======= PENGATURAN =======
+function simpanPengaturan() {
+  set(pengaturanRef, { katKeluar, katMasuk, bankList });
+}
+
+function tambahKategori(tipe) {
+  const inputId = tipe === 'keluar' ? 'input-kat-keluar' : 'input-kat-masuk';
+  const nama = document.getElementById(inputId).value.trim();
+  if (!nama) { alert('Isi nama kategori!'); return; }
+
+  if (tipe === 'keluar') {
+    if (katKeluar.includes(nama)) { alert('Kategori sudah ada!'); return; }
+    katKeluar.push(nama);
+  } else {
+    if (katMasuk.includes(nama)) { alert('Kategori sudah ada!'); return; }
+    katMasuk.push(nama);
+  }
+
+  document.getElementById(inputId).value = '';
+  simpanPengaturan();
+}
+
+function hapusKategori(tipe, nama) {
+  if (!confirm(`Hapus kategori "${nama}"?`)) return;
+  if (tipe === 'keluar') {
+    katKeluar = katKeluar.filter(k => k !== nama);
+  } else {
+    katMasuk = katMasuk.filter(k => k !== nama);
+  }
+  simpanPengaturan();
+}
+
+function tambahBank() {
+  const nama = document.getElementById('input-bank').value.trim();
+  if (!nama) { alert('Isi nama bank!'); return; }
+  if (bankList.includes(nama)) { alert('Bank/dompet sudah ada!'); return; }
+  bankList.push(nama);
+  document.getElementById('input-bank').value = '';
+  simpanPengaturan();
+}
+
+function hapusBank(nama) {
+  if (!confirm(`Hapus "${nama}" dari daftar bank?`)) return;
+  bankList = bankList.filter(b => b !== nama);
+  simpanPengaturan();
+}
+
+function renderPengaturan() {
+  const listKeluar = document.getElementById('list-kat-keluar');
+  const listMasuk = document.getElementById('list-kat-masuk');
+  const listBank = document.getElementById('list-bank');
+
+  if (listKeluar) {
+    listKeluar.innerHTML = katKeluar.map(k => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#f8fafc;border-radius:8px;margin-bottom:5px;font-size:13px">
+        <span>${k}</span>
+        <button onclick="hapusKategori('keluar','${k}')" style="background:none;border:none;cursor:pointer;color:#94a3b8;font-size:14px">✕</button>
+      </div>
+    `).join('');
+  }
+
+  if (listMasuk) {
+    listMasuk.innerHTML = katMasuk.map(k => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#f8fafc;border-radius:8px;margin-bottom:5px;font-size:13px">
+        <span>${k}</span>
+        <button onclick="hapusKategori('masuk','${k}')" style="background:none;border:none;cursor:pointer;color:#94a3b8;font-size:14px">✕</button>
+      </div>
+    `).join('');
+  }
+
+  if (listBank) {
+    listBank.innerHTML = bankList.map(b => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#f8fafc;border-radius:8px;margin-bottom:5px;font-size:13px">
+        <span>${b}</span>
+        <button onclick="hapusBank('${b}')" style="background:none;border:none;cursor:pointer;color:#94a3b8;font-size:14px">✕</button>
+      </div>
+    `).join('');
+  }
+}
+
+function updateFormOptions() {
+  // Update dropdown kategori di form transaksi
+  const katEl = document.getElementById('kategori');
+  if (katEl) {
+    const list = tipeAktif === 'masuk' ? katMasuk : katKeluar;
+    const current = katEl.value;
+    katEl.innerHTML = list.map(k => `<option value="${k}" ${k === current ? 'selected' : ''}>${k}</option>`).join('');
+  }
+
+  // Update dropdown metode di form transaksi
+  const metodeEl = document.getElementById('metode');
+  if (metodeEl) {
+    const current = metodeEl.value;
+    metodeEl.innerHTML = bankList.map(b => `<option value="${b}" ${b === current ? 'selected' : ''}>${b}</option>`).join('');
+  }
+
+  // Update dropdown transfer
+  const transferDari = document.getElementById('transfer-dari');
+  const transferKe = document.getElementById('transfer-ke');
+  if (transferDari) transferDari.innerHTML = bankList.map(b => `<option value="${b}">${b}</option>`).join('');
+  if (transferKe) transferKe.innerHTML = bankList.map(b => `<option value="${b}">${b}</option>`).join('');
+
+  // Update dropdown budget kategori
+  const budgetKat = document.getElementById('budget-kat');
+  if (budgetKat) budgetKat.innerHTML = katKeluar.map(k => `<option value="${k}">${k}</option>`).join('');
+
+  // Update metodeList global
+  metodeList.length = 0;
+  bankList.forEach(b => metodeList.push(b));
+}
 
 // ======= EXPOSE =======
 window.gotoTab = gotoTab;
@@ -1080,3 +1185,7 @@ window.updateHP = updateHP;
 window.updateBudget = updateBudget;
 window.updateTransaksi = updateTransaksi;
 window.tampilkanError = tampilkanError;
+window.tambahKategori = tambahKategori;
+window.hapusKategori = hapusKategori;
+window.tambahBank = tambahBank;
+window.hapusBank = hapusBank;

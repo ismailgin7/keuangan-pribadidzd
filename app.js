@@ -28,18 +28,13 @@ function getBasePath() {
 }
 
 function updateRefs() {
-  const base = getBasePath();
-  transaksiRef = ref(db, `${base}/transaksi`);
-  budgetRef = ref(db, `${base}/budget`);
-  hpRef = ref(db, `${base}/hutangpiutang`);
-  targetRef = ref(db, `${base}/target`);
+  transaksiRef = ref(db, 'transaksi');
+  budgetRef = ref(db, 'budget');
+  hpRef = ref(db, 'hutangpiutang');
+  targetRef = ref(db, 'target');
 }
 
 let transaksi = [];
-let saldoAwal = {};
-saldoAwal = JSON.parse(
-  localStorage.getItem('saldoAwal') || '{}'
-);
 let tipeAktif = 'masuk';
 let grafikInstance = null;
 let grafikSaldoInstance = null;
@@ -132,7 +127,6 @@ function hentikanListeners() {
 function gantiMode() {
   modeAktif = modeAktif === 'keluarga' ? 'pribadi' : 'keluarga';
   localStorage.setItem('modeAktif', modeAktif);
-  localStorage.setItem('saldoAwal', JSON.stringify(saldoAwal));
   updateRefs();
   updateModeUI();
   mulaiListeners();
@@ -253,7 +247,7 @@ function tambahTransaksi() {
 
 function hapus(key) {
   if (!confirm('Hapus transaksi ini?')) return;
-  remove(ref(db, `${getBasePath()}/transaksi/${key}`));
+  remove(ref(db, `transaksi/${key}`));
 }
 
 function editTransaksi(key) {
@@ -282,7 +276,7 @@ function updateTransaksi(key) {
   const tanggal = document.getElementById('tanggal').value;
   const metode = document.getElementById('metode').value;
   if (!keterangan || !jumlah || jumlah <= 0 || !tanggal) { alert('Lengkapi semua kolom!'); return; }
-  set(ref(db, `${getBasePath()}/transaksi/${key}`), { id: Date.now(), tipe: tipeAktif, keterangan, jumlah, kategori, tanggal, metode });
+  set(ref(db, `transaksi/${key}`), { id: Date.now(), tipe: tipeAktif, keterangan, jumlah, kategori, tanggal, metode });
   const btn = document.getElementById('btn-simpan-transaksi');
   btn.textContent = '+ Simpan Transaksi';
   btn.onclick = tambahTransaksi;
@@ -459,11 +453,11 @@ function simpanBudget() {
   const kat = document.getElementById('budget-kat').value;
   const nominal = parseFloat(document.getElementById('budget-nominal').value);
   if (!nominal || nominal <= 0) { alert('Isi nominal anggaran!'); return; }
-  set(ref(db, `${getBasePath()}/budget/${kat}`), nominal);
+  set(ref(db, `budget/${kat}`), nominal);
   document.getElementById('budget-nominal').value = '';
 }
 
-function hapusBudget(kat) { remove(ref(db, `${getBasePath()}/budget/${kat}`)); }
+function hapusBudget(kat) { remove(ref(db, `budget/${kat}`)); }
 
 function editBudget(kat, nominal) {
   document.getElementById('budget-kat').value = kat;
@@ -481,7 +475,7 @@ function editBudget(kat, nominal) {
 function updateBudget(kat) {
   const nominal = parseFloat(document.getElementById('budget-nominal').value);
   if (!nominal || nominal <= 0) { alert('Isi nominal anggaran!'); return; }
-  set(ref(db, `${getBasePath()}/budget/${kat}`), nominal);
+  set(ref(db, `budget/${kat}`), nominal);
   const btn = document.getElementById('btn-simpan-budget');
   btn.textContent = 'Set Anggaran';
   btn.onclick = simpanBudget;
@@ -633,11 +627,8 @@ function renderRekeningList() {
   metodeList.forEach(m => {
     const masuk = transaksi.filter(t => t.tipe === 'masuk' && t.metode === m).reduce((s,t) => s+t.jumlah, 0);
     const keluar = transaksi.filter(t => t.tipe === 'keluar' && t.metode === m).reduce((s,t) => s+t.jumlah, 0);
-    const saldo = (saldoAwal[m] || 0) + masuk - keluar;
-    if ((saldoAwal[m] || 0) > 0 || masuk > 0 || keluar > 0) {
-    rekeningAktif.push({ nama: m, saldo });
-    totalSaldo += saldo;
-}
+    const saldo = masuk - keluar;
+    if (masuk > 0 || keluar > 0) { rekeningAktif.push({ nama: m, saldo }); totalSaldo += saldo; }
   });
   if (elTotal) elTotal.textContent = formatRupiah(totalSaldo);
   if (rekeningAktif.length === 0) { container.innerHTML = '<p style="font-size:13px;color:#94a3b8;text-align:center;padding:12px">Belum ada rekening.</p>'; return; }
@@ -667,7 +658,7 @@ function tambahHP() {
 
 function tandaiLunas(key) {
   if (!confirm('Hapus data ini?')) return;
-  remove(ref(db, `${getBasePath()}/hutangpiutang/${key}`));
+  remove(ref(db, `hutangpiutang/${key}`));
 }
 
 function editHP(key) {
@@ -697,7 +688,7 @@ function updateHP(key) {
   const keterangan = document.getElementById('hp-keterangan').value.trim();
   if (!nama || !jumlah || jumlah <= 0 || !tanggal) { alert('Lengkapi semua kolom!'); return; }
   const target = hpData.find(h => h._key === key);
-  set(ref(db, `${getBasePath()}/hutangpiutang/${key}`), { nama, jumlah, tanggal, keterangan, tipe: hpTab, terbayar: target.terbayar || 0 });
+  set(ref(db, `hutangpiutang/${key}`), { nama, jumlah, tanggal, keterangan, tipe: hpTab, terbayar: target.terbayar || 0 });
   const btn = document.getElementById('btn-simpan-hp');
   btn.textContent = '+ Tambah';
   btn.onclick = tambahHP;
@@ -726,7 +717,7 @@ function simpanCicilan() {
   if (!jumlah || jumlah <= 0) { alert('Isi jumlah bayar!'); return; }
   const target = hpData.find(h => h._key === cicilanTargetKey);
   if (!target) return;
-  set(ref(db, `${getBasePath()}/hutangpiutang/${cicilanTargetKey}/terbayar`), (target.terbayar || 0) + jumlah);
+  set(ref(db, `hutangpiutang/${cicilanTargetKey}/terbayar`), (target.terbayar || 0) + jumlah);
   tutupCicilan();
 }
 
@@ -779,7 +770,7 @@ function tambahTarget() {
 
 function hapusTarget(key) {
   if (!confirm('Hapus target ini?')) return;
-  remove(ref(db, `${getBasePath()}/target/${key}`));
+  remove(ref(db, `target/${key}`));
 }
 
 function editTarget(key) {
@@ -806,7 +797,7 @@ function updateTarget(key) {
   const deadline = document.getElementById('target-deadline').value;
   if (!nama || !jumlah || jumlah <= 0) { alert('Isi nama dan jumlah target!'); return; }
   const target = targetData.find(t => t._key === key);
-  set(ref(db, `${getBasePath()}/target/${key}`), { nama, jumlah, emoji, deadline: deadline || null, terkumpul: target.terkumpul || 0, createdAt: target.createdAt });
+  set(ref(db, `target/${key}`), { nama, jumlah, emoji, deadline: deadline || null, terkumpul: target.terkumpul || 0, createdAt: target.createdAt });
   const btn = document.getElementById('btn-simpan-target');
   btn.textContent = '+ Tambah Target';
   btn.onclick = tambahTarget;
@@ -836,7 +827,7 @@ function simpanDanaTarget() {
   if (!jumlah || jumlah <= 0) { alert('Isi jumlah dana!'); return; }
   const target = targetData.find(t => t._key === targetDanaKey);
   if (!target) return;
-  set(ref(db, `${getBasePath()}/target/${targetDanaKey}/terkumpul`), (target.terkumpul || 0) + jumlah);
+  set(ref(db, `target/${targetDanaKey}/terkumpul`), (target.terkumpul || 0) + jumlah);
   tutupDanaTarget();
 }
 
@@ -976,11 +967,10 @@ async function restoreData(event) {
       if (!data.transaksi && !data.budget) { alert('❌ File tidak valid!'); return; }
       const konfirmasi = confirm(`Restore data?\n\nTransaksi: ${data.transaksi?.length || 0}\nAnggaran: ${Object.keys(data.budget || {}).length} kategori\nHutang/Piutang: ${data.hutangpiutang?.length || 0}\nTarget: ${data.target?.length || 0}\n\n⚠️ Data sekarang akan DIGANTI!`);
       if (!konfirmasi) { document.getElementById('input-restore').value = ''; return; }
-      const base = getBasePath();
-      if (data.transaksi?.length > 0) { await set(ref(db, `${base}/transaksi`), null); for (const t of data.transaksi) { const { _key, ...d } = t; await push(transaksiRef, d); } }
-      if (data.budget && Object.keys(data.budget).length > 0) await set(ref(db, `${base}/budget`), data.budget);
-      if (data.hutangpiutang?.length > 0) { await set(ref(db, `${base}/hutangpiutang`), null); for (const h of data.hutangpiutang) { const { _key, ...d } = h; await push(hpRef, d); } }
-      if (data.target?.length > 0) { await set(ref(db, `${base}/target`), null); for (const t of data.target) { const { _key, ...d } = t; await push(targetRef, d); } }
+      if (data.transaksi?.length > 0) { await set(ref(db, `transaksi`), null); for (const t of data.transaksi) { const { _key, ...d } = t; await push(transaksiRef, d); } }
+      if (data.budget && Object.keys(data.budget).length > 0) await set(ref(db, `budget`), data.budget);
+      if (data.hutangpiutang?.length > 0) { await set(ref(db, `hutangpiutang`), null); for (const h of data.hutangpiutang) { const { _key, ...d } = h; await push(hpRef, d); } }
+      if (data.target?.length > 0) { await set(ref(db, `target`), null); for (const t of data.target) { const { _key, ...d } = t; await push(targetRef, d); } }
       document.getElementById('input-restore').value = '';
       alert('✅ Restore berhasil!');
     } catch (err) { alert('❌ Gagal restore.'); console.error(err); }
@@ -1024,20 +1014,6 @@ function loginUser() {
 function logoutUser() {
   if (!confirm('Yakin mau keluar?')) return;
   signOut(auth);
-}
-function aturSaldoAwal() {
-  metodeList.forEach(metode => {
-    const nilai = prompt(
-      `Masukkan saldo awal ${metode}`,
-      saldoAwal[metode] || 0
-    );
-
-    if (nilai !== null) {
-      saldoAwal[metode] = parseFloat(nilai) || 0;
-    }
-  });
-
-  renderRekeningList();
 }
 
 // ======= EXPOSE =======

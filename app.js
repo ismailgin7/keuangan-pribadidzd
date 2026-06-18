@@ -140,12 +140,7 @@ const l5 = onValue(pengaturanRef, (snapshot) => {
     { ref: targetRef, fn: l4 },
     { ref: pengaturanRef, fn: l5 }
   ];
-  listenerRefs = [
-    { ref: transaksiRef, fn: l1 },
-    { ref: budgetRef, fn: l2 },
-    { ref: hpRef, fn: l3 },
-    { ref: targetRef, fn: l4 }
-  ];
+  
 }
 
 function hentikanListeners() {

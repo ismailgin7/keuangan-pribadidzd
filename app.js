@@ -124,7 +124,8 @@ function mulaiListeners() {
     });
     renderTarget();
   });
-const l5 = onValue(pengaturanRef, (snapshot) => {
+
+  const l5 = onValue(pengaturanRef, (snapshot) => {
     const data = snapshot.val() || {};
     katKeluar = data.katKeluar || [...defaultKatKeluar];
     katMasuk = data.katMasuk || [...defaultKatMasuk];

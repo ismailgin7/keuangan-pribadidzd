@@ -219,7 +219,6 @@ function setType(tipe) {
   } else if (tipe === 'keluar') {
     document.getElementById('btn-keluar').className = 'active-expense';
     document.getElementById('kategori').innerHTML = katKeluar.map(k => `<option value="${k}">${k}</option>`).join('');
-  
   } else if (tipe === 'transfer') {
     document.getElementById('btn-transfer').className = 'active-transfer';
     document.getElementById('form-utama').style.display = 'none';

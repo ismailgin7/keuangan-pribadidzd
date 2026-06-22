@@ -1144,6 +1144,199 @@ function updateFormOptions() {
   metodeList.length = 0;
   bankList.forEach(b => metodeList.push(b));
 }
+// ======= LAPORAN PDF =======
+function generatePDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+  const bulanIni = new Date().toISOString().slice(0, 7);
+  const namaBulan = new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+  const tglCetak = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  const pageW = doc.internal.pageSize.getWidth();
+  const margin = 14;
+
+  // ======= HEADER =======
+  doc.setFillColor(99, 102, 241);
+  doc.rect(0, 0, pageW, 32, 'F');
+
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(18);
+  doc.setFont('helvetica', 'bold');
+  doc.text('◈ Savvy', margin, 13);
+
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Laporan Keuangan Bulanan', margin, 20);
+
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.text(namaBulan, pageW - margin, 13, { align: 'right' });
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Dicetak: ${tglCetak}`, pageW - margin, 20, { align: 'right' });
+
+  let y = 42;
+
+  // ======= RINGKASAN =======
+  doc.setTextColor(100, 116, 139);
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'bold');
+  doc.text('RINGKASAN KEUANGAN', margin, y);
+  y += 2;
+  doc.setDrawColor(226, 232, 240);
+  doc.line(margin, y, pageW - margin, y);
+  y += 6;
+
+  const txBulanIni = transaksi.filter(t => t.tanggal.slice(0, 7) === bulanIni);
+  const totalMasuk = txBulanIni.filter(t => t.tipe === 'masuk' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
+  const totalKeluar = txBulanIni.filter(t => t.tipe === 'keluar' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
+  const allMasuk = transaksi.filter(t => t.tipe === 'masuk' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
+  const allKeluar = transaksi.filter(t => t.tipe === 'keluar' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
+  const saldo = allMasuk - allKeluar;
+  const cashflow = totalMasuk - totalKeluar;
+  const savingRate = totalMasuk > 0 ? ((cashflow / totalMasuk) * 100).toFixed(1) : 0;
+  const hariIni = new Date().getDate();
+
+  const ringkasan = [
+    ['Saldo Total', formatRupiah(saldo), 'Pemasukan Bulan Ini', formatRupiah(totalMasuk)],
+    ['Pengeluaran Bulan Ini', formatRupiah(totalKeluar), 'Cashflow Bersih', (cashflow >= 0 ? '+ ' : '- ') + formatRupiah(Math.abs(cashflow))],
+    ['Saving Rate', savingRate + '%', 'Rata-rata Harian', formatRupiah(totalKeluar / hariIni)],
+  ];
+
+  doc.autoTable({
+    startY: y,
+    head: [],
+    body: ringkasan,
+    theme: 'grid',
+    styles: { fontSize: 9, cellPadding: 3 },
+    columnStyles: {
+      0: { cellWidth: 45, fontStyle: 'bold', textColor: [100, 116, 139] },
+      1: { cellWidth: 45, textColor: [30, 41, 59] },
+      2: { cellWidth: 45, fontStyle: 'bold', textColor: [100, 116, 139] },
+      3: { cellWidth: 45, textColor: [30, 41, 59] }
+    },
+    margin: { left: margin, right: margin }
+  });
+
+  y = doc.lastAutoTable.finalY + 10;
+
+  // ======= ANGGARAN =======
+  doc.setTextColor(100, 116, 139);
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'bold');
+  doc.text('REALISASI ANGGARAN', margin, y);
+  y += 2;
+  doc.line(margin, y, pageW - margin, y);
+  y += 6;
+
+  const anggaranRows = Object.keys(budget).map(kat => {
+    const batas = budget[kat];
+    const terpakai = txBulanIni.filter(t => t.tipe === 'keluar' && t.kategori === kat).reduce((s,t) => s+t.jumlah, 0);
+    const persen = batas > 0 ? ((terpakai / batas) * 100).toFixed(0) : 0;
+    const status = terpakai > batas ? '⚠ Melebihi' : persen >= 80 ? '⚡ Hampir' : '✓ Aman';
+    return [kat, formatRupiah(terpakai), formatRupiah(batas), persen + '%', status];
+  });
+
+  if (anggaranRows.length > 0) {
+    doc.autoTable({
+      startY: y,
+      head: [['Kategori', 'Terpakai', 'Anggaran', '%', 'Status']],
+      body: anggaranRows,
+      theme: 'striped',
+      headStyles: { fillColor: [99, 102, 241], textColor: 255, fontSize: 9 },
+      styles: { fontSize: 9, cellPadding: 3 },
+      margin: { left: margin, right: margin }
+    });
+    y = doc.lastAutoTable.finalY + 10;
+  }
+
+  // ======= TRANSAKSI =======
+  if (y > 220) { doc.addPage(); y = 20; }
+
+  doc.setTextColor(100, 116, 139);
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'bold');
+  doc.text(`RIWAYAT TRANSAKSI (${txBulanIni.length} transaksi)`, margin, y);
+  y += 2;
+  doc.line(margin, y, pageW - margin, y);
+  y += 6;
+
+  const txRows = txBulanIni.map(t => {
+    const tgl = new Date(t.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+    const sign = t.tipe === 'masuk' ? '+' : '-';
+    return [tgl, t.keterangan.slice(0, 30), t.kategori, t.metode, sign + formatRupiah(t.jumlah)];
+  });
+
+  if (txRows.length > 0) {
+    doc.autoTable({
+      startY: y,
+      head: [['Tgl', 'Keterangan', 'Kategori', 'Metode', 'Jumlah']],
+      body: txRows,
+      theme: 'striped',
+      headStyles: { fillColor: [99, 102, 241], textColor: 255, fontSize: 9 },
+      styles: { fontSize: 8, cellPadding: 2 },
+      columnStyles: {
+        0: { cellWidth: 16 },
+        1: { cellWidth: 65 },
+        2: { cellWidth: 30 },
+        3: { cellWidth: 22 },
+        4: { cellWidth: 35, halign: 'right' }
+      },
+      margin: { left: margin, right: margin }
+    });
+    y = doc.lastAutoTable.finalY + 10;
+  }
+
+  // ======= HUTANG PIUTANG =======
+  const hpAktif = hpData.filter(h => (h.jumlah - (h.terbayar || 0)) > 0);
+  if (hpAktif.length > 0) {
+    if (y > 220) { doc.addPage(); y = 20; }
+
+    doc.setTextColor(100, 116, 139);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text('HUTANG & PIUTANG AKTIF', margin, y);
+    y += 2;
+    doc.line(margin, y, pageW - margin, y);
+    y += 6;
+
+    const hpRows = hpAktif.map(h => {
+      const sisa = h.jumlah - (h.terbayar || 0);
+      const tgl = new Date(h.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+      return [h.tipe === 'piutang' ? 'Piutang' : 'Hutang', h.nama, h.keterangan || '-', tgl, formatRupiah(sisa)];
+    });
+
+    doc.autoTable({
+      startY: y,
+      head: [['Jenis', 'Nama', 'Keterangan', 'Tanggal', 'Sisa']],
+      body: hpRows,
+      theme: 'striped',
+      headStyles: { fillColor: [99, 102, 241], textColor: 255, fontSize: 9 },
+      styles: { fontSize: 9, cellPadding: 3 },
+      margin: { left: margin, right: margin }
+    });
+    y = doc.lastAutoTable.finalY + 10;
+  }
+
+  // ======= FOOTER =======
+  const pageCount = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    const footerY = doc.internal.pageSize.getHeight() - 10;
+    doc.setFillColor(248, 250, 252);
+    doc.rect(0, footerY - 6, pageW, 16, 'F');
+    doc.setTextColor(148, 163, 184);
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.text('◈ Savvy · Laporan otomatis', margin, footerY);
+    doc.text(`Halaman ${i} dari ${pageCount}`, pageW - margin, footerY, { align: 'right' });
+  }
+
+  // Download PDF
+  doc.save(`laporan-savvy-${bulanIni}.pdf`);
+  toggleMenu();
+}
 
 // ======= EXPOSE =======
 window.gotoTab = gotoTab;
@@ -1188,3 +1381,4 @@ window.tambahKategori = tambahKategori;
 window.hapusKategori = hapusKategori;
 window.tambahBank = tambahBank;
 window.hapusBank = hapusBank;
+window.generatePDF = generatePDF;

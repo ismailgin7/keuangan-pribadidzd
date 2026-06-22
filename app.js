@@ -3,14 +3,14 @@ import { getDatabase, ref, push, onValue, remove, set, off } from "https://www.g
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAHWlHoXP-HiQIoDZYVi66qQTuj2Rg3zI4",
-  authDomain: "keuangan-keluarga-dzd.firebaseapp.com",
-  databaseURL: "https://keuangan-keluarga-dzd-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "keuangan-keluarga-dzd",
-  storageBucket: "keuangan-keluarga-dzd.firebasestorage.app",
-  messagingSenderId: "904972809560",
-  appId: "1:904972809560:web:1639fd8b6423aa134c612d"
-};
+    apiKey: "AIzaSyCrOjni5iJt64C2_YLRL1DOv7tfGAz7m9o",
+    authDomain: "kerta-58b48.firebaseapp.com",
+    databaseURL: "https://kerta-58b48-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "kerta-58b48",
+    storageBucket: "kerta-58b48.firebasestorage.app",
+    messagingSenderId: "595616991854",
+    appId: "1:595616991854:web:8263732c147b0e5b08347f"
+  };
 
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getDatabase(firebaseApp);
@@ -701,6 +701,11 @@ function bukaCicilan(key, nama, sisa) {
   document.getElementById('cicilan-jumlah').value = '';
   document.getElementById('cicilan-keterangan').value = '';
   document.getElementById('cicilan-tanggal').valueAsDate = new Date();
+
+  // Update pilihan metode pembayaran
+  const metodeEl = document.getElementById('cicilan-metode');
+  if (metodeEl) metodeEl.innerHTML = bankList.map(b => `<option value="${b}">${b}</option>`).join('');
+
   document.getElementById('form-cicilan').style.display = 'block';
 }
 
@@ -712,11 +717,46 @@ function tutupCicilan() {
 function simpanCicilan() {
   if (!cicilanTargetKey) return;
   const jumlah = parseFloat(document.getElementById('cicilan-jumlah').value);
+  const tanggal = document.getElementById('cicilan-tanggal').value;
+  const metode = document.getElementById('cicilan-metode')?.value || 'Cash';
+  const keterangan = document.getElementById('cicilan-keterangan').value.trim();
+
   if (!jumlah || jumlah <= 0) { alert('Isi jumlah bayar!'); return; }
-  const target = hpData.find(h => h._key === cicilanTargetKey);
-  if (!target) return;
-  set(ref(db, `hutangpiutang/${cicilanTargetKey}/terbayar`), (target.terbayar || 0) + jumlah);
+  if (!tanggal) { alert('Isi tanggal!'); return; }
+
+  const hp = hpData.find(h => h._key === cicilanTargetKey);
+  if (!hp) return;
+
+  // Update terbayar di hutang/piutang
+  set(ref(db, `hutangpiutang/${cicilanTargetKey}/terbayar`), (hp.terbayar || 0) + jumlah);
+
+  // Catat otomatis ke transaksi
+  if (hp.tipe === 'hutang') {
+    // Bayar hutang = pengeluaran
+    push(transaksiRef, {
+      id: Date.now(),
+      tipe: 'keluar',
+      keterangan: keterangan || `Bayar hutang — ${hp.nama}`,
+      jumlah,
+      kategori: 'Hutang',
+      tanggal,
+      metode
+    });
+  } else {
+    // Terima piutang = pemasukan
+    push(transaksiRef, {
+      id: Date.now(),
+      tipe: 'masuk',
+      keterangan: keterangan || `Terima piutang — ${hp.nama}`,
+      jumlah,
+      kategori: 'Piutang',
+      tanggal,
+      metode
+    });
+  }
+
   tutupCicilan();
+  alert(`✅ ${hp.tipe === 'hutang' ? 'Pembayaran hutang' : 'Penerimaan piutang'} sebesar ${formatRupiah(jumlah)} berhasil dicatat!`);
 }
 
 function renderHP() {
@@ -822,11 +862,31 @@ function tutupDanaTarget() {
 function simpanDanaTarget() {
   if (!targetDanaKey) return;
   const jumlah = parseFloat(document.getElementById('target-dana-jumlah').value);
+  const tanggal = document.getElementById('target-dana-tanggal').value;
+  const metode = document.getElementById('target-dana-metode')?.value || 'Cash';
+
   if (!jumlah || jumlah <= 0) { alert('Isi jumlah dana!'); return; }
+  if (!tanggal) { alert('Isi tanggal!'); return; }
+
   const target = targetData.find(t => t._key === targetDanaKey);
   if (!target) return;
+
+  // Update terkumpul di target
   set(ref(db, `target/${targetDanaKey}/terkumpul`), (target.terkumpul || 0) + jumlah);
+
+  // Catat otomatis ke transaksi sebagai pengeluaran tabungan
+  push(transaksiRef, {
+    id: Date.now(),
+    tipe: 'keluar',
+    keterangan: `Tabungan target — ${target.emoji} ${target.nama}`,
+    jumlah,
+    kategori: 'Tabungan',
+    tanggal,
+    metode
+  });
+
   tutupDanaTarget();
+  alert(`✅ Dana ${formatRupiah(jumlah)} berhasil ditambahkan ke target ${target.nama} dan dicatat di transaksi!`);
 }
 
 function renderTarget() {

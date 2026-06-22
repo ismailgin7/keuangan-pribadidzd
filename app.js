@@ -936,7 +936,7 @@ async function cekDanKirimNotifikasi() {
 
 async function aktifkanNotifikasi() {
   const izin = await mintaIzinNotifikasi();
-  if (izin) { kirimNotifikasi('🔔 Notifikasi Aktif!', 'Savvy akan memberi tahu kamu kalau anggaran hampir habis.'); alert('✅ Notifikasi berhasil diaktifkan!'); }
+  if (izin) { kirimNotifikasi('🔔 Notifikasi Aktif!', 'Kerta akan memberi tahu kamu kalau anggaran hampir habis.'); alert('✅ Notifikasi berhasil diaktifkan!'); }
   else { alert('❌ Izin notifikasi ditolak. Aktifkan manual di pengaturan browser.'); }
   toggleMenu();
 }
@@ -949,7 +949,7 @@ function backupData() {
   const a = document.createElement('a');
   const tgl = new Date().toISOString().slice(0, 10);
   a.href = url;
-  a.download = `backup-savvy-${modeAktif}-${tgl}.json`;
+  a.download = `backup-kerta-${modeAktif}-${tgl}.json`;
   a.click();
   URL.revokeObjectURL(url);
   alert(`✅ Backup berhasil!`);
@@ -1163,7 +1163,7 @@ function generatePDF() {
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(18);
   doc.setFont('helvetica', 'bold');
-  doc.text('◈ Savvy', margin, 13);
+  doc.text('◈ Kerta', margin, 13);
 
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
@@ -1329,12 +1329,12 @@ function generatePDF() {
     doc.setTextColor(148, 163, 184);
     doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');
-    doc.text('◈ Savvy · Laporan otomatis', margin, footerY);
+    doc.text('◈ Kerta · Laporan otomatis', margin, footerY);
     doc.text(`Halaman ${i} dari ${pageCount}`, pageW - margin, footerY, { align: 'right' });
   }
 
   // Download PDF
-  doc.save(`laporan-savvy-${bulanIni}.pdf`);
+  doc.save(`laporan-kerta-${bulanIni}.pdf`);
   toggleMenu();
 }
 

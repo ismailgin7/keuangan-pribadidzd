@@ -75,6 +75,7 @@
           <button onclick="backupData();toggleMenu()">💾 Backup Data</button>
           <button onclick="document.getElementById('input-restore').click();toggleMenu()">📂 Restore Data</button>
           <input type="file" id="input-restore" accept=".json" style="display:none" onchange="restoreData(event)" />
+          <button onclick="generatePDF()">📄 Laporan PDF</button>
           <button onclick="aktifkanNotifikasi()">🔔 Aktifkan Notifikasi</button>
           <div class="dropdown-divider"></div>
           <div class="dropdown-divider"></div>
@@ -495,6 +496,8 @@
 
 </div>
 </div> <!-- penutup aplikasi-utama -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
   <script type="module" src="app.js"></script>

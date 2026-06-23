@@ -382,6 +382,7 @@
           <div class="budget-form">
             <input type="number" id="cicilan-jumlah" placeholder="Jumlah bayar (Rp)" min="0" />
             <input type="date" id="cicilan-tanggal" />
+            <select id="cicilan-metode"></select>
             <input type="text" id="cicilan-keterangan" placeholder="Keterangan (opsional)" />
             <button class="btn-simpan" onclick="simpanCicilan()">✓ Simpan Bayar</button>
             <button onclick="tutupCicilan()" style="padding:10px;border:1.5px solid #e2e8f0;border-radius:10px;background:white;cursor:pointer;font-family:'Inter',sans-serif;font-size:14px">Batal</button>
@@ -428,6 +429,7 @@
         <div class="budget-form">
           <input type="number" id="target-dana-jumlah" placeholder="Jumlah yang ditambahkan (Rp)" min="0" />
           <input type="date" id="target-dana-tanggal" />
+          <select id="target-dana-metode"></select>
           <button class="btn-simpan" onclick="simpanDanaTarget()">✓ Simpan</button>
           <button onclick="tutupDanaTarget()" style="padding:10px;border:1.5px solid #e2e8f0;border-radius:10px;background:white;cursor:pointer;font-family:'Inter',sans-serif;font-size:14px">Batal</button>
         </div>

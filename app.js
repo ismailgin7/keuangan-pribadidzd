@@ -3,14 +3,14 @@ import { getDatabase, ref, push, onValue, remove, set, off } from "https://www.g
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
-    apiKey: "AIzaSyCrOjni5iJt64C2_YLRL1DOv7tfGAz7m9o",
-    authDomain: "kerta-58b48.firebaseapp.com",
-    databaseURL: "https://kerta-58b48-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "kerta-58b48",
-    storageBucket: "kerta-58b48.firebasestorage.app",
-    messagingSenderId: "595616991854",
-    appId: "1:595616991854:web:8263732c147b0e5b08347f"
-  };
+  apiKey: "AIzaSyAHWlHoXP-HiQIoDZYVi66qQTuj2Rg3zI4",
+  authDomain: "keuangan-keluarga-dzd.firebaseapp.com",
+  databaseURL: "https://keuangan-keluarga-dzd-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "keuangan-keluarga-dzd",
+  storageBucket: "keuangan-keluarga-dzd.firebasestorage.app",
+  messagingSenderId: "904972809560",
+  appId: "1:904972809560:web:1639fd8b6423aa134c612d"
+};
 
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getDatabase(firebaseApp);

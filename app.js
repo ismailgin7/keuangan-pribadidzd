@@ -33,6 +33,7 @@ function updateRefs() {
   hpRef = ref(db, 'hutangpiutang');
   targetRef = ref(db, 'target');
   pengaturanRef = ref(db, 'pengaturan');
+  saldoAwalRef = ref(db, 'saldoAwal'); // ← tambah ini
 }
 
 let transaksi = [];
@@ -60,6 +61,8 @@ let katKeluar = [...defaultKatKeluar];
 let katMasuk = [...defaultKatMasuk];
 let bankList = [...defaultBank];
 let pengaturanRef;
+let saldoAwalRef;
+let saldoAwal = {};
 
 const metodeList = ['Cash', 'BNI', 'BSI', 'DANA', 'OVO', 'SeaBank', 'GoPay'];
 
@@ -134,13 +137,20 @@ function mulaiListeners() {
     updateFormOptions();
   });
 
+  const l6 = onValue(saldoAwalRef, (snapshot) => {
+  saldoAwal = snapshot.val() || {};
+  render();
+  renderRekeningList();
+});
+
   listenerRefs = [
-    { ref: transaksiRef, fn: l1 },
-    { ref: budgetRef, fn: l2 },
-    { ref: hpRef, fn: l3 },
-    { ref: targetRef, fn: l4 },
-    { ref: pengaturanRef, fn: l5 }
-  ];
+  { ref: transaksiRef, fn: l1 },
+  { ref: budgetRef, fn: l2 },
+  { ref: hpRef, fn: l3 },
+  { ref: targetRef, fn: l4 },
+  { ref: pengaturanRef, fn: l5 },
+  { ref: saldoAwalRef, fn: l6 }, // ← tambah ini
+];
   
 }
 
@@ -340,8 +350,9 @@ function render() {
   const totalMasuk = filteredBulanIni.filter(t => t.tipe === 'masuk' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
   const totalKeluar = filteredBulanIni.filter(t => t.tipe === 'keluar' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
   const allMasuk = transaksi.filter(t => t.tipe === 'masuk' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
-  const allKeluar = transaksi.filter(t => t.tipe === 'keluar' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
-  const saldo = allMasuk - allKeluar;
+const allKeluar = transaksi.filter(t => t.tipe === 'keluar' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
+const totalSaldoAwal = Object.values(saldoAwal).reduce((s, v) => s + v, 0);
+const saldo = totalSaldoAwal + allMasuk - allKeluar;
 
   document.getElementById('total-masuk').textContent = formatRupiah(totalMasuk);
   document.getElementById('total-keluar').textContent = formatRupiah(totalKeluar);
@@ -625,8 +636,9 @@ function renderRekeningList() {
   metodeList.forEach(m => {
     const masuk = transaksi.filter(t => t.tipe === 'masuk' && t.metode === m).reduce((s,t) => s+t.jumlah, 0);
     const keluar = transaksi.filter(t => t.tipe === 'keluar' && t.metode === m).reduce((s,t) => s+t.jumlah, 0);
-    const saldo = masuk - keluar;
-    if (masuk > 0 || keluar > 0) { rekeningAktif.push({ nama: m, saldo }); totalSaldo += saldo; }
+    const awal = saldoAwal[m] || 0;
+const saldo = awal + masuk - keluar;
+if (awal > 0 || masuk > 0 || keluar > 0) { rekeningAktif.push({ nama: m, saldo }); totalSaldo += saldo; }
   });
   if (elTotal) elTotal.textContent = formatRupiah(totalSaldo);
   if (rekeningAktif.length === 0) { container.innerHTML = '<p style="font-size:13px;color:#94a3b8;text-align:center;padding:12px">Belum ada rekening.</p>'; return; }
@@ -1468,6 +1480,56 @@ function toggleHistori(id) {
   el.style.display = isOpen ? 'none' : 'block';
   if (icon) icon.textContent = isOpen ? '▼' : '▲';
 }
+function aturSaldoAwal() {
+  // Buat modal
+  const existing = document.getElementById('modal-saldo-awal');
+  if (existing) existing.remove();
+
+  const inputsHTML = bankList.map(b => `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <label style="font-size:13px;font-weight:500;color:#475569;width:80px">${b}</label>
+      <input type="number" id="saldo-awal-${b}" placeholder="0" min="0"
+        value="${saldoAwal[b] || ''}"
+        style="flex:1;padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;font-family:'Inter',sans-serif;margin-left:12px" />
+    </div>
+  `).join('');
+
+  const modal = document.createElement('div');
+  modal.id = 'modal-saldo-awal';
+  modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);z-index:9999;display:flex;align-items:center;justify-content:center';
+  modal.innerHTML = `
+    <div style="background:white;border-radius:16px;padding:24px;width:100%;max-width:400px;max-height:80vh;overflow-y:auto;margin:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <h3 style="font-size:16px;font-weight:700;color:#1e293b;margin:0">Atur Saldo Awal</h3>
+        <button onclick="document.getElementById('modal-saldo-awal').remove()"
+          style="background:none;border:none;cursor:pointer;font-size:20px;color:#94a3b8">✕</button>
+      </div>
+      <p style="font-size:12px;color:#94a3b8;margin-bottom:16px">Saldo awal tidak dihitung sebagai pemasukan. Kosongkan jika tidak ada.</p>
+      ${inputsHTML}
+      <button onclick="simpanSaldoAwal()"
+        style="width:100%;padding:12px;background:#6366f1;color:white;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;margin-top:8px">
+        💾 Simpan Saldo Awal
+      </button>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  // Tutup modal kalau klik luar
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) modal.remove();
+  });
+}
+
+function simpanSaldoAwal() {
+  const data = {};
+  bankList.forEach(b => {
+    const val = parseFloat(document.getElementById('saldo-awal-' + b)?.value);
+    if (val && val > 0) data[b] = val;
+  });
+  set(saldoAwalRef, data);
+  document.getElementById('modal-saldo-awal').remove();
+  alert('✅ Saldo awal berhasil disimpan!');
+}
 
 // ======= EXPOSE =======
 window.gotoTab = gotoTab;
@@ -1514,3 +1576,5 @@ window.tambahBank = tambahBank;
 window.hapusBank = hapusBank;
 window.generatePDF = generatePDF;
 window.toggleHistori = toggleHistori;
+window.aturSaldoAwal = aturSaldoAwal;
+window.simpanSaldoAwal = simpanSaldoAwal;

@@ -917,20 +917,6 @@ function bukaDanaTarget(key, nama, sisa) {
   document.getElementById('form-target-dana').scrollIntoView({ behavior: 'smooth' });
 }
 
-function bukaDanaTarget(key, nama, sisa) {
-  targetDanaKey = key;
-  document.getElementById('target-dana-label').textContent = `Tambah dana untuk: ${nama} (Kurang: ${formatRupiah(sisa)})`;
-  document.getElementById('target-dana-jumlah').value = '';
-  document.getElementById('target-dana-tanggal').valueAsDate = new Date();
-
-  // Isi dropdown metode dari bankList
-  const metodeEl = document.getElementById('target-dana-metode');
-  if (metodeEl) metodeEl.innerHTML = bankList.map(b => `<option value="${b}">${b}</option>`).join('');
-
-  document.getElementById('form-target-dana').style.display = 'block';
-  document.getElementById('form-target-dana').scrollIntoView({ behavior: 'smooth' });
-}
-
 function tutupDanaTarget() {
   targetDanaKey = null;
   document.getElementById('form-target-dana').style.display = 'none';

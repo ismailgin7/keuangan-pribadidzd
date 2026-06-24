@@ -901,6 +901,30 @@ function editTarget(key) {
   btn.onclick = () => updateTarget(key);
   document.getElementById('target-nama').scrollIntoView({ behavior: 'smooth' });
 }
+function updateTarget(key) {
+  const nama = document.getElementById('target-nama').value.trim();
+  const jumlah = parseFloat(document.getElementById('target-jumlah').value);
+  const emoji = document.getElementById('target-emoji').value.trim() || '🎯';
+  const deadline = document.getElementById('target-deadline').value;
+  if (!nama || !jumlah || jumlah <= 0) { alert('Isi nama dan jumlah target!'); return; }
+  const target = targetData.find(t => t._key === key);
+  set(ref(db, `target/${key}`), {
+    nama,
+    jumlah,
+    emoji,
+    deadline: deadline || null,
+    terkumpul: target.terkumpul || 0,
+    histori: target.histori || null,
+    createdAt: target.createdAt
+  });
+  const btn = document.getElementById('btn-simpan-target');
+  btn.textContent = '+ Tambah Target';
+  btn.onclick = tambahTarget;
+  document.getElementById('target-nama').value = '';
+  document.getElementById('target-jumlah').value = '';
+  document.getElementById('target-emoji').value = '';
+  document.getElementById('target-deadline').value = '';
+}
 
 function bukaDanaTarget(key, nama, sisa) {
   targetDanaKey = key;

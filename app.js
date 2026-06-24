@@ -727,12 +727,22 @@ function simpanCicilan() {
   const hp = hpData.find(h => h._key === cicilanTargetKey);
   if (!hp) return;
 
-  // Update terbayar di hutang/piutang
-  set(ref(db, `hutangpiutang/${cicilanTargetKey}/terbayar`), (hp.terbayar || 0) + jumlah);
+  // Update terbayar
+  const terbayarBaru = (hp.terbayar || 0) + jumlah;
+  set(ref(db, `hutangpiutang/${cicilanTargetKey}/terbayar`), terbayarBaru);
+
+  // Simpan histori pembayaran ke Firebase
+  const sisaSetelahBayar = hp.jumlah - terbayarBaru;
+  push(ref(db, `hutangpiutang/${cicilanTargetKey}/histori`), {
+    tanggal,
+    jumlah,
+    metode,
+    keterangan: keterangan || (hp.tipe === 'hutang' ? `Bayar hutang — ${hp.nama}` : `Terima piutang — ${hp.nama}`),
+    sisaSetelah: sisaSetelahBayar < 0 ? 0 : sisaSetelahBayar
+  });
 
   // Catat otomatis ke transaksi
   if (hp.tipe === 'hutang') {
-    // Bayar hutang = pengeluaran
     push(transaksiRef, {
       id: Date.now(),
       tipe: 'keluar',
@@ -743,7 +753,6 @@ function simpanCicilan() {
       metode
     });
   } else {
-    // Terima piutang = pemasukan
     push(transaksiRef, {
       id: Date.now(),
       tipe: 'masuk',
@@ -773,14 +782,67 @@ function renderHP() {
   const totalSisa = filtered.reduce((s, h) => s + (h.jumlah - (h.terbayar || 0)), 0);
   container.innerHTML = `<div style="font-size:13px;color:#94a3b8;margin-bottom:10px">Sisa: <strong style="color:${hpTab==='piutang'?'#16a34a':'#dc2626'}">${formatRupiah(totalSisa)}</strong></div>` +
     filtered.map(h => {
-      const terbayar = h.terbayar || 0;
-      const sisa = h.jumlah - terbayar;
-      const persen = Math.min((terbayar / h.jumlah) * 100, 100).toFixed(0);
-      const warna = hpTab === 'piutang' ? '#10b981' : '#ef4444';
-      const tgl = new Date(h.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
-      const lunas = sisa <= 0;
-      return `<div class="budget-item"><div class="budget-header"><span style="font-weight:500">${h.nama} ${lunas ? '✅' : ''}</span><span class="budget-angka">${formatRupiah(terbayar)} / ${formatRupiah(h.jumlah)}</span></div><div style="font-size:11px;color:#94a3b8;margin-bottom:4px">${h.keterangan || ''} · ${tgl}</div><div class="budget-bar-track"><div class="budget-bar-fill" style="width:${persen}%;background:${warna}"></div></div><div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px"><div class="budget-status">Sisa ${formatRupiah(sisa)} (${persen}% terbayar)</div><div style="display:flex;gap:6px">${!lunas ? `<button class="hp-lunas" onclick="bukaCicilan('${h._key}','${h.nama}',${sisa})">+ Bayar</button>` : ''}<button class="hp-lunas" onclick="editHP('${h._key}')">✏️ Edit</button><button class="hp-lunas" onclick="tandaiLunas('${h._key}')" style="color:#dc2626;border-color:#dc2626">🗑 Hapus</button></div></div></div>`;
-    }).join('');
+  const terbayar = h.terbayar || 0;
+  const sisa = h.jumlah - terbayar;
+  const persen = Math.min((terbayar / h.jumlah) * 100, 100).toFixed(0);
+  const warna = hpTab === 'piutang' ? '#10b981' : '#ef4444';
+  const tgl = new Date(h.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+  const lunas = sisa <= 0;
+
+  // Render histori pembayaran
+  const historiList = h.histori ? Object.values(h.histori) : [];
+  historiList.sort((a, b) => b.tanggal.localeCompare(a.tanggal));
+  const historiHTML = historiList.length === 0
+    ? `<p style="font-size:12px;color:#94a3b8;text-align:center;padding:8px">Belum ada pembayaran.</p>`
+    : historiList.map(item => {
+        const tglItem = new Date(item.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+        return `
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:12px">
+            <div>
+              <div style="font-weight:500;color:#1e293b">${item.keterangan}</div>
+              <div style="color:#94a3b8;margin-top:2px">${tglItem} · ${item.metode}</div>
+              <div style="color:#94a3b8;margin-top:1px">Sisa setelah bayar: <strong>${formatRupiah(item.sisaSetelah)}</strong></div>
+            </div>
+            <div style="font-weight:600;color:${hpTab === 'piutang' ? '#16a34a' : '#dc2626'};flex-shrink:0;margin-left:8px">
+              ${formatRupiah(item.jumlah)}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+  return `
+    <div class="budget-item">
+      <div class="budget-header">
+        <span style="font-weight:500">${h.nama} ${lunas ? '✅' : ''}</span>
+        <span class="budget-angka">${formatRupiah(terbayar)} / ${formatRupiah(h.jumlah)}</span>
+      </div>
+      <div style="font-size:11px;color:#94a3b8;margin-bottom:4px">${h.keterangan || ''} · ${tgl}</div>
+      <div class="budget-bar-track">
+        <div class="budget-bar-fill" style="width:${persen}%;background:${warna}"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
+        <div class="budget-status">Sisa ${formatRupiah(sisa)} (${persen}% terbayar)</div>
+        <div style="display:flex;gap:6px">
+          ${!lunas ? `<button class="hp-lunas" onclick="bukaCicilan('${h._key}','${h.nama}',${sisa})">+ Bayar</button>` : ''}
+          <button class="hp-lunas" onclick="editHP('${h._key}')">✏️ Edit</button>
+          <button class="hp-lunas" onclick="tandaiLunas('${h._key}')" style="color:#dc2626;border-color:#dc2626">🗑 Hapus</button>
+        </div>
+      </div>
+
+      <!-- ACCORDION HISTORI -->
+      <div style="margin-top:10px;border-top:1px solid #f1f5f9;padding-top:8px">
+        <button onclick="toggleHistori('histori-${h._key}')"
+          style="width:100%;text-align:left;background:none;border:none;cursor:pointer;font-size:12px;font-weight:600;color:#6366f1;font-family:'Inter',sans-serif;padding:0;display:flex;justify-content:space-between;align-items:center">
+          <span>📋 Histori Pembayaran (${historiList.length})</span>
+          <span id="icon-${h._key}">▼</span>
+        </button>
+        <div id="histori-${h._key}" style="display:none;margin-top:8px">
+          ${historiHTML}
+        </div>
+      </div>
+    </div>
+  `;
+}).join('')
   if (grafikContainer) {
     grafikContainer.innerHTML = filtered.map(h => {
       const terbayar = h.terbayar || 0;
@@ -1397,6 +1459,15 @@ function generatePDF() {
   doc.save(`laporan-kerta-${bulanIni}.pdf`);
   toggleMenu();
 }
+function toggleHistori(id) {
+  const el = document.getElementById(id);
+  const key = id.replace('histori-', '');
+  const icon = document.getElementById('icon-' + key);
+  if (!el) return;
+  const isOpen = el.style.display !== 'none';
+  el.style.display = isOpen ? 'none' : 'block';
+  if (icon) icon.textContent = isOpen ? '▼' : '▲';
+}
 
 // ======= EXPOSE =======
 window.gotoTab = gotoTab;
@@ -1442,3 +1513,4 @@ window.hapusKategori = hapusKategori;
 window.tambahBank = tambahBank;
 window.hapusBank = hapusBank;
 window.generatePDF = generatePDF;
+window.toggleHistori = toggleHistori;
